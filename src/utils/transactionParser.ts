@@ -109,7 +109,7 @@ const PAYMENT_KEYWORDS = {
   'ben': 'Ben',
   'flash': 'Flash',
   'up': 'Up',
-  'brasil': 'Brasil',
+  'upbrasil': 'Up Brasil',
   
   // Bancos
   'nubank': 'Nubank',
