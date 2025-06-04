@@ -10,6 +10,14 @@ interface ProtectedRouteProps {
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
 
+  // Durante desenvolvimento, permite acesso sem login
+  const isDevelopment = import.meta.env.DEV;
+  
+  if (isDevelopment) {
+    console.log('Modo desenvolvimento: autenticação desabilitada');
+    return <>{children}</>;
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
