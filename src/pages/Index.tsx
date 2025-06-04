@@ -1,9 +1,9 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Dashboard from "@/components/Dashboard";
-import ChatInterface from "@/components/ChatInterface";
-import Settings from "@/components/Settings";
-import Navigation from "@/components/Navigation";
+import { Dashboard } from "@/components/Dashboard";
+import { ChatInterface } from "@/components/ChatInterface";
+import { Settings } from "@/components/Settings";
+import { Navigation } from "@/components/Navigation";
 import UserProfile from "@/components/UserProfile";
 
 const Index = () => {
