@@ -10,6 +10,7 @@ const CATEGORIAS: Record<string, { categoria: string; icone: string; cor: string
   'pizza': { categoria: 'Alimentação', icone: '🍕', cor: '#FF6B6B' },
   'mercado': { categoria: 'Alimentação', icone: '🛒', cor: '#FF6B6B' },
   'supermercado': { categoria: 'Alimentação', icone: '🛒', cor: '#FF6B6B' },
+  'padaria': { categoria: 'Alimentação', icone: '🥖', cor: '#FF6B6B' },
   
   // Transporte
   'uber': { categoria: 'Transporte', icone: '🚗', cor: '#4ECDC4' },
@@ -50,6 +51,98 @@ const CATEGORIAS: Record<string, { categoria: string; icone: string; cor: string
   'limpeza': { categoria: 'Casa', icone: '🧽', cor: '#82E0AA' },
 };
 
+// Mapas para normalizar formas de pagamento
+const PAYMENT_KEYWORDS = {
+  // Cartão de Crédito
+  'credito': 'crédito',
+  'crédito': 'crédito',
+  'credit': 'crédito',
+  
+  // Cartão de Débito  
+  'debito': 'débito',
+  'débito': 'débito',
+  'debit': 'débito',
+  
+  // PIX
+  'pix': 'pix',
+  
+  // Dinheiro
+  'dinheiro': 'dinheiro',
+  'especie': 'dinheiro',
+  'espécie': 'dinheiro',
+  'cash': 'dinheiro',
+  
+  // Boleto
+  'boleto': 'boleto',
+  'bancario': 'boleto bancário',
+  'bancário': 'boleto bancário',
+  
+  // Débito em conta
+  'automatico': 'débito automático',
+  'automático': 'débito automático',
+  'conta': 'débito em conta',
+  
+  // Carteiras digitais
+  'mercado pago': 'Mercado Pago',
+  'picpay': 'PicPay',
+  'paypal': 'PayPal',
+  'pagseguro': 'PagSeguro',
+  'google pay': 'Google Pay',
+  'apple pay': 'Apple Pay',
+  'samsung pay': 'Samsung Pay',
+  'ame': 'Ame Digital',
+  'ame digital': 'Ame Digital',
+  'inter pay': 'Inter Pay',
+  'recarga pay': 'Recarga Pay',
+  
+  // Vales
+  'vale': 'vale',
+  'alimentacao': 'vale alimentação',
+  'alimentação': 'vale alimentação',
+  'refeicao': 'vale refeição',
+  'refeição': 'vale refeição',
+  'sodexo': 'Sodexo',
+  'alelo': 'Alelo',
+  'ticket': 'Ticket',
+  'vr': 'VR',
+  'ben': 'Ben',
+  'flash': 'Flash',
+  'up brasil': 'Up Brasil',
+  
+  // Bancos
+  'nubank': 'Nubank',
+  'inter': 'Inter',
+  'itau': 'Itaú',
+  'itaú': 'Itaú',
+  'santander': 'Santander',
+  'bradesco': 'Bradesco',
+  'caixa': 'Caixa',
+  'bb': 'Banco do Brasil',
+  'banco do brasil': 'Banco do Brasil',
+  'c6': 'C6 Bank',
+  'original': 'Original',
+  'next': 'Next',
+  'neon': 'Neon',
+  'picpay': 'PicPay',
+  
+  // Bandeiras
+  'visa': 'Visa',
+  'mastercard': 'Mastercard',
+  'elo': 'Elo',
+  'amex': 'American Express',
+  'hipercard': 'Hipercard',
+  
+  // Outros
+  'transferencia': 'transferência bancária',
+  'transferência': 'transferência bancária',
+  'cheque': 'cheque',
+  'saldo': 'saldo',
+  'cashback': 'cashback',
+  'credito loja': 'crédito loja',
+  'crédito loja': 'crédito loja',
+  'virtual': 'virtual'
+};
+
 export function parseTransactionMessage(message: string): { 
   descricao: string; 
   valor: number; 
@@ -61,9 +154,9 @@ export function parseTransactionMessage(message: string): {
   // Remove espaços extras e converte para minúsculas
   const cleanMessage = message.trim().toLowerCase();
   
-  // Regex para capturar: descrição + valor + forma de pagamento (opcional)
+  // Regex mais flexível para capturar: descrição + valor + forma de pagamento (múltiplas palavras)
   const patterns = [
-    // Padrão: "ifood 44,00 pix" ou "ifood 44.00 pix"
+    // Padrão: "ifood 44,00 cartao inter credito" ou qualquer coisa após o valor
     /^(.+?)\s+([\d,\.]+)\s+(.+)$/,
     // Padrão: "ifood 44,00" ou "ifood 44.00"
     /^(.+?)\s+([\d,\.]+)$/,
@@ -75,12 +168,15 @@ export function parseTransactionMessage(message: string): {
       const descricao = match[1].trim();
       const valorStr = match[2].replace(',', '.');
       const valor = parseFloat(valorStr);
-      const formaPagamento = match[3]?.trim();
+      const formaPagamentoRaw = match[3]?.trim();
       
       if (isNaN(valor) || valor <= 0) continue;
       
       // Buscar categoria baseada na descrição
       const categoriaInfo = findCategory(descricao);
+      
+      // Processar forma de pagamento se fornecida
+      const formaPagamento = formaPagamentoRaw ? processPaymentMethod(formaPagamentoRaw) : undefined;
       
       return {
         descricao,
@@ -92,6 +188,50 @@ export function parseTransactionMessage(message: string): {
   }
   
   return null;
+}
+
+function processPaymentMethod(rawPayment: string): string {
+  const tokens = rawPayment.toLowerCase().split(/\s+/);
+  const processedTokens: string[] = [];
+  
+  // Primeiro passo: identificar e normalizar palavras-chave conhecidas
+  for (const token of tokens) {
+    const normalized = PAYMENT_KEYWORDS[token];
+    if (normalized) {
+      processedTokens.push(normalized);
+    } else {
+      // Manter tokens não reconhecidos mas capitalizar primeira letra
+      processedTokens.push(token.charAt(0).toUpperCase() + token.slice(1));
+    }
+  }
+  
+  // Segundo passo: formar a descrição final da forma de pagamento
+  let result = processedTokens.join(' ');
+  
+  // Casos especiais para cartões
+  if (result.includes('crédito') || result.includes('débito')) {
+    // Se tem banco + tipo: "Inter crédito" -> "Cartão Inter Crédito"
+    // Se tem bandeira + tipo: "Visa crédito" -> "Cartão Visa Crédito"  
+    // Se só tem tipo: "crédito" -> "Cartão de Crédito"
+    
+    if (!result.toLowerCase().includes('cartão') && !result.toLowerCase().includes('cartao')) {
+      if (processedTokens.length === 1) {
+        result = `Cartão de ${result}`;
+      } else {
+        result = `Cartão ${result}`;
+      }
+    }
+  }
+  
+  // Casos especiais para PIX
+  if (result.toLowerCase().includes('pix') && processedTokens.length > 1) {
+    // "pix inter" -> "PIX Inter"
+    result = result.replace(/pix/i, 'PIX');
+  } else if (result.toLowerCase() === 'pix') {
+    result = 'PIX';
+  }
+  
+  return result;
 }
 
 function findCategory(descricao: string): { categoria: string; icone: string; cor: string } {
