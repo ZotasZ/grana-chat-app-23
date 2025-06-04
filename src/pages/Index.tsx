@@ -1,32 +1,41 @@
 
-import React, { useState } from 'react';
-import { ChatInterface } from '../components/ChatInterface';
-import { Dashboard } from '../components/Dashboard';
-import { Settings } from '../components/Settings';
-import { Navigation } from '../components/Navigation';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Dashboard from "@/components/Dashboard";
+import ChatInterface from "@/components/ChatInterface";
+import Settings from "@/components/Settings";
+import Navigation from "@/components/Navigation";
+import UserProfile from "@/components/UserProfile";
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState<'chat' | 'dashboard' | 'settings'>('chat');
-
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'chat':
-        return <ChatInterface />;
-      case 'dashboard':
-        return <Dashboard />;
-      case 'settings':
-        return <Settings />;
-      default:
-        return <ChatInterface />;
-    }
-  };
-
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
-      <div className="flex-1 overflow-hidden">
-        {renderContent()}
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      <div className="container mx-auto px-4 py-6">
+        <Tabs defaultValue="dashboard" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="chat">Chat IA</TabsTrigger>
+            <TabsTrigger value="profile">Perfil</TabsTrigger>
+            <TabsTrigger value="settings">Configurações</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="dashboard" className="mt-6">
+            <Dashboard />
+          </TabsContent>
+          
+          <TabsContent value="chat" className="mt-6">
+            <ChatInterface />
+          </TabsContent>
+          
+          <TabsContent value="profile" className="mt-6">
+            <UserProfile />
+          </TabsContent>
+          
+          <TabsContent value="settings" className="mt-6">
+            <Settings />
+          </TabsContent>
+        </Tabs>
       </div>
-      <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
   );
 };
