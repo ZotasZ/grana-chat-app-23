@@ -1,4 +1,3 @@
-
 import { Transaction } from '../types/Transaction';
 
 const CATEGORIAS: Record<string, { categoria: string; icone: string; cor: string }> = {
@@ -76,7 +75,7 @@ const PAYMENT_KEYWORDS = {
     'cartao de credito', 'cartão de crédito', 'cartaocredito', 'cartãocrédito',
     'visa credito', 'visa crédito', 'master credito', 'mastercard credito',
     'elo credito', 'hipercard', 'american express', 'amex', 'cartcred',
-    'cred', 'credcard', 'creditcard'
+    'cred', 'credcard', 'creditcard', 'c6'
   ],
   
   // DÉBITO - palavras que indicam especificamente cartão de débito
@@ -140,7 +139,7 @@ const NATURAL_WORDS = [
   'no', 'na', 'do', 'da', 'com', 'via', 'pelo', 'pela',
   'hoje', 'ontem', 'amanha', 'amanhã', 'semana', 'mês', 'mes',
   'reais', 'real', 'r$', 'rs', 'brl',
-  'pagamento', 'transação', 'transacao', 'valor'
+  'pagamento', 'transação', 'transacao', 'valor', 'cartao', 'cartão'
 ];
 
 interface PaymentValidationResult {
@@ -149,7 +148,7 @@ interface PaymentValidationResult {
   conflitos: string[];
 }
 
-export function parseTransactionMessage(message: string): { 
+interface ParsedTransaction {
   descricao: string; 
   valor: number; 
   formaPagamento?: string;
@@ -157,47 +156,71 @@ export function parseTransactionMessage(message: string): {
   icone: string;
   cor: string;
   validacao?: PaymentValidationResult;
-} | null {
+  // Novos campos para parcelas
+  totalParcelas?: number;
+  valorParcela?: number;
+}
+
+export function parseTransactionMessage(message: string): ParsedTransaction | null {
   console.log('🔍 Parsing message:', message);
   
   // Limpar e normalizar a mensagem
   let cleanMessage = message.trim().toLowerCase();
+  
+  // Verificar se há informação de parcelas (ex: "2x", "3x", "10x")
+  const parcelaMatch = cleanMessage.match(/(\d{1,2})x\b/);
+  let totalParcelas = 1;
+  
+  if (parcelaMatch) {
+    totalParcelas = parseInt(parcelaMatch[1]);
+    console.log('📊 Parcelas detectadas:', totalParcelas);
+    // Remover a informação de parcelas da mensagem
+    cleanMessage = cleanMessage.replace(parcelaMatch[0], '').trim();
+  }
   
   // Remover símbolos de moeda
   cleanMessage = cleanMessage.replace(/r\$\s*/g, '');
   
   // Extrair valor usando regex mais robusta
   const valorMatches = cleanMessage.match(/\b(\d{1,6}(?:[,\.]\d{1,2})?)\b/g);
-  if (!valorMatches) {
-    console.log('❌ Nenhum valor encontrado');
-    return null;
+  let valor = 0;
+  let valorStr = '';
+  
+  if (valorMatches && valorMatches.length > 0) {
+    valorStr = valorMatches[0].replace(',', '.');
+    valor = parseFloat(valorStr);
+    console.log('💰 Valor total encontrado:', valor);
+  } else {
+    // Se não encontrou valor, assumir valor padrão
+    console.log('💰 Nenhum valor específico encontrado, usando valor padrão');
+    valor = 0;
   }
   
-  // Pegar o primeiro valor encontrado e converter
-  const valorStr = valorMatches[0].replace(',', '.');
-  const valor = parseFloat(valorStr);
-  
-  if (isNaN(valor) || valor <= 0) {
-    console.log('❌ Valor inválido:', valorStr);
-    return null;
-  }
-  
-  console.log('💰 Valor encontrado:', valor);
+  // Calcular valor da parcela
+  const valorParcela = totalParcelas > 1 ? valor / totalParcelas : valor;
   
   // Remover o valor da mensagem para processar o resto
-  let remainingMessage = cleanMessage.replace(valorStr.replace('.', ','), '').replace(valorStr, '');
+  let remainingMessage = cleanMessage;
+  if (valorStr) {
+    remainingMessage = cleanMessage.replace(valorStr.replace('.', ','), '').replace(valorStr, '');
+  }
   
   // Dividir em tokens
   const tokens = remainingMessage.split(/\s+/).filter(token => 
     token.length > 0 && 
-    !NATURAL_WORDS.includes(token) &&
+    !['gastei', 'paguei', 'comprei', 'pago', 'gasto', 'compra', 'no', 'na', 'do', 'da', 'com', 'via', 'pelo', 'pela'].includes(token) &&
     token !== valorStr &&
     token !== valorStr.replace('.', ',')
   );
   
   console.log('🔤 Tokens extraídos:', tokens);
   
-  // Identificar forma de pagamento com validação robusta
+  if (tokens.length === 0) {
+    console.log('❌ Nenhum token válido encontrado');
+    return null;
+  }
+  
+  // Identificar forma de pagamento
   const paymentValidation = validatePaymentMethod(tokens, remainingMessage);
   let descriptionTokens: string[] = [];
   
@@ -208,33 +231,58 @@ export function parseTransactionMessage(message: string): {
     descriptionTokens = tokens;
   }
   
-  // Criar descrição a partir dos tokens restantes
+  // Criar descrição
   let descricao = descriptionTokens.join(' ').trim();
   
-  // Se não há descrição, usar uma genérica
-  if (!descricao) {
+  if (!descricao && tokens.length > 0) {
+    descricao = tokens.filter(token => !isPaymentToken(token)).join(' ') || 'Gasto';
+  } else if (!descricao) {
     descricao = 'Gasto';
-  } else {
-    // Limpar descrição de palavras desnecessárias
-    descricao = descricao.replace(/\b(de|do|da|no|na|com|via|pelo|pela)\b/g, '').trim();
   }
+  
+  // Limpar descrição
+  descricao = descricao.replace(/\b(de|do|da|no|na|com|via|pelo|pela)\b/g, '').trim();
   
   console.log('📝 Descrição final:', descricao);
   
-  // Buscar categoria baseada na descrição
+  // Buscar categoria
   const categoriaInfo = findCategory(descricao);
   console.log('📂 Categoria identificada:', categoriaInfo.categoria);
   
-  const result = {
+  // Se valor é 0, sugerir um valor padrão
+  if (valor === 0) {
+    valor = getSuggestedValue(categoriaInfo.categoria);
+    valorParcela = totalParcelas > 1 ? valor / totalParcelas : valor;
+    console.log('💡 Valor sugerido:', valor);
+  }
+  
+  const result: ParsedTransaction = {
     descricao,
-    valor,
+    valor: valorParcela, // Retorna o valor da parcela
     formaPagamento: paymentValidation.formaPagamento,
     validacao: paymentValidation,
+    totalParcelas: totalParcelas > 1 ? totalParcelas : undefined,
+    valorParcela: totalParcelas > 1 ? valorParcela : undefined,
     ...categoriaInfo
   };
   
   console.log('✅ Resultado final:', result);
   return result;
+}
+
+function getSuggestedValue(categoria: string): number {
+  const defaultValues: Record<string, number> = {
+    'Alimentação': 25.00,
+    'Transporte': 15.00,
+    'Presentes': 50.00,
+    'Saúde': 30.00,
+    'Lazer': 40.00,
+    'Educação': 100.00,
+    'Casa': 80.00,
+    'Outros': 20.00
+  };
+  
+  return defaultValues[categoria] || 20.00;
 }
 
 function validatePaymentMethod(tokens: string[], fullMessage: string): PaymentValidationResult {
@@ -253,13 +301,11 @@ function validatePaymentMethod(tokens: string[], fullMessage: string): PaymentVa
       for (const token of tokens) {
         if (token.includes(keyword) || keyword.includes(token)) {
           foundKeywords.push(keyword);
-          // Confiança baseada na correspondência exata vs parcial
           const confianca = token === keyword ? 1.0 : 0.7;
           maxConfianca = Math.max(maxConfianca, confianca);
         }
       }
       
-      // Verificar também na mensagem completa para frases
       if (fullMessage.includes(keyword)) {
         foundKeywords.push(keyword);
         maxConfianca = Math.max(maxConfianca, 0.8);
@@ -297,7 +343,6 @@ function validatePaymentMethod(tokens: string[], fullMessage: string): PaymentVa
     const creditoPayment = detectedPayments.find(p => p.tipo === 'credito');
     const debitoPayment = detectedPayments.find(p => p.tipo === 'debito');
     
-    // Se uma das palavras é mais específica, usar ela
     if (creditoPayment && debitoPayment) {
       const creditoEspecifico = creditoPayment.palavras.some(p => 
         ['cartao credito', 'cartão crédito', 'credito', 'crédito'].includes(p)

@@ -7,6 +7,12 @@ export interface Transaction {
   data: Date;
   tipo: 'gasto' | 'receita';
   formaPagamento?: string;
+  // Novos campos para parcelas
+  parcelado?: boolean;
+  parcelaAtual?: number;
+  totalParcelas?: number;
+  valorOriginal?: number;
+  grupoParcelaId?: string;
 }
 
 export interface Category {

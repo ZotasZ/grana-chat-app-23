@@ -13,7 +13,7 @@ export function ChatInterface() {
   const [isTyping, setIsTyping] = useState(false);
   const [lastValidation, setLastValidation] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { addTransaction, addChatMessage, chatMessages, getRecentTransactions, getTotalByPeriod } = useTransactionStore();
+  const { addTransaction, addParceladoTransaction, addChatMessage, chatMessages, getRecentTransactions, getTotalByPeriod } = useTransactionStore();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -36,7 +36,6 @@ export function ChatInterface() {
     setInputMessage('');
     setIsTyping(true);
 
-    // Simular delay do assistente
     setTimeout(() => {
       processMessage(inputMessage);
       setIsTyping(false);
@@ -46,13 +45,11 @@ export function ChatInterface() {
   const processMessage = (message: string) => {
     const lowerMessage = message.toLowerCase();
 
-    // Verificar se é uma consulta
     if (lowerMessage.includes('gastei') || lowerMessage.includes('gastos') || lowerMessage.includes('quanto')) {
       handleQuery(lowerMessage);
       return;
     }
 
-    // Tentar processar como transação
     const parsedTransaction = parseTransactionMessage(message);
     
     if (parsedTransaction) {
@@ -65,32 +62,52 @@ export function ChatInterface() {
         formaPagamento: parsedTransaction.formaPagamento,
       };
 
-      addTransaction(transaction);
+      // Verificar se é parcelado
+      if (parsedTransaction.totalParcelas && parsedTransaction.totalParcelas > 1) {
+        addParceladoTransaction(transaction, parsedTransaction.totalParcelas);
+        
+        const valorTotal = parsedTransaction.valor * parsedTransaction.totalParcelas;
+        let confirmationMessage = `✅ Compra parcelada registrada!\n${parsedTransaction.icone} ${parsedTransaction.categoria}: ${formatCurrency(valorTotal)}\n💳 ${parsedTransaction.totalParcelas}x de ${formatCurrency(parsedTransaction.valor)}\n${parsedTransaction.formaPagamento ? `💳 Forma de pagamento: ${parsedTransaction.formaPagamento}\n` : ''}📅 Primeira parcela: ${new Date().toLocaleDateString('pt-BR')}\n📅 Última parcela: ${new Date(new Date().setMonth(new Date().getMonth() + parsedTransaction.totalParcelas - 1)).toLocaleDateString('pt-BR')}`;
 
-      // Preparar mensagem de confirmação
-      let confirmationMessage = `✅ Gasto registrado!\n${parsedTransaction.icone} ${parsedTransaction.categoria}: ${formatCurrency(parsedTransaction.valor)}\n${parsedTransaction.formaPagamento ? `💳 Forma de pagamento: ${parsedTransaction.formaPagamento}\n` : ''}📅 ${new Date().toLocaleDateString('pt-BR')}`;
+        if (parsedTransaction.validacao?.conflitos.length > 0) {
+          confirmationMessage += `\n\n⚠️ Atenção: ${parsedTransaction.validacao.conflitos.join(', ')}`;
+          setLastValidation(parsedTransaction.validacao);
+        }
 
-      // Adicionar avisos de validação se houver conflitos
-      if (parsedTransaction.validacao?.conflitos.length > 0) {
-        confirmationMessage += `\n\n⚠️ Atenção: ${parsedTransaction.validacao.conflitos.join(', ')}`;
-        setLastValidation(parsedTransaction.validacao);
-      } else if (parsedTransaction.validacao?.confianca < 0.7) {
-        confirmationMessage += `\n\n🤔 Forma de pagamento detectada com ${Math.round(parsedTransaction.validacao.confianca * 100)}% de confiança`;
-        setLastValidation(parsedTransaction.validacao);
+        const assistantMessage: Omit<ChatMessage, 'id'> = {
+          tipo: 'assistant',
+          conteudo: confirmationMessage,
+          timestamp: new Date(),
+        };
+
+        addChatMessage(assistantMessage);
+      } else {
+        // Transação única
+        addTransaction(transaction);
+
+        let confirmationMessage = `✅ Gasto registrado!\n${parsedTransaction.icone} ${parsedTransaction.categoria}: ${formatCurrency(parsedTransaction.valor)}\n${parsedTransaction.formaPagamento ? `💳 Forma de pagamento: ${parsedTransaction.formaPagamento}\n` : ''}📅 ${new Date().toLocaleDateString('pt-BR')}`;
+
+        if (parsedTransaction.validacao?.conflitos.length > 0) {
+          confirmationMessage += `\n\n⚠️ Atenção: ${parsedTransaction.validacao.conflitos.join(', ')}`;
+          setLastValidation(parsedTransaction.validacao);
+        } else if (parsedTransaction.validacao?.confianca < 0.7) {
+          confirmationMessage += `\n\n🤔 Forma de pagamento detectada com ${Math.round(parsedTransaction.validacao.confianca * 100)}% de confiança`;
+          setLastValidation(parsedTransaction.validacao);
+        }
+
+        const assistantMessage: Omit<ChatMessage, 'id'> = {
+          tipo: 'assistant',
+          conteudo: confirmationMessage,
+          timestamp: new Date(),
+          transacao: { ...transaction, id: Date.now().toString() },
+        };
+
+        addChatMessage(assistantMessage);
       }
-
-      const assistantMessage: Omit<ChatMessage, 'id'> = {
-        tipo: 'assistant',
-        conteudo: confirmationMessage,
-        timestamp: new Date(),
-        transacao: { ...transaction, id: Date.now().toString() },
-      };
-
-      addChatMessage(assistantMessage);
     } else {
       const assistantMessage: Omit<ChatMessage, 'id'> = {
         tipo: 'assistant',
-        conteudo: '🤔 Não consegui entender. Tente algo como:\n• "ifood 44,00 crédito"\n• "uber 15 pix"\n• "mercado 120 cartão débito"',
+        conteudo: '🤔 Não consegui entender. Tente algo como:\n• "ifood 44,00 crédito"\n• "uber 15 pix"\n• "tênis 200 cartão crédito 2x"\n• "mercado 120 cartão débito"',
         timestamp: new Date(),
       };
 
@@ -158,6 +175,7 @@ export function ChatInterface() {
             <div className="mt-4 space-y-2 text-xs">
               <p>• "ifood 44,00 crédito"</p>
               <p>• "uber 15 pix"</p>
+              <p>• "tênis 200 cartão crédito 2x"</p>
               <p>• "mercado 120 cartão débito"</p>
             </div>
           </div>

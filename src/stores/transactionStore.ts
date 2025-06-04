@@ -7,6 +7,7 @@ interface TransactionStore {
   transactions: Transaction[];
   chatMessages: ChatMessage[];
   addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
+  addParceladoTransaction: (transaction: Omit<Transaction, 'id'>, totalParcelas: number) => void;
   addChatMessage: (message: Omit<ChatMessage, 'id'>) => void;
   getTransactionsByCategory: () => Record<string, Transaction[]>;
   getRecentTransactions: (limit?: number) => Transaction[];
@@ -27,6 +28,33 @@ export const useTransactionStore = create<TransactionStore>()(
         
         set((state) => ({
           transactions: [...state.transactions, newTransaction],
+        }));
+      },
+
+      addParceladoTransaction: (baseTransaction, totalParcelas) => {
+        const grupoParcelaId = Date.now().toString();
+        const transactions: Transaction[] = [];
+        
+        for (let i = 0; i < totalParcelas; i++) {
+          const dataTransacao = new Date();
+          dataTransacao.setMonth(dataTransacao.getMonth() + i);
+          
+          const transaction: Transaction = {
+            ...baseTransaction,
+            id: `${grupoParcelaId}-${i + 1}`,
+            data: dataTransacao,
+            parcelado: true,
+            parcelaAtual: i + 1,
+            totalParcelas: totalParcelas,
+            valorOriginal: baseTransaction.valor * totalParcelas,
+            grupoParcelaId: grupoParcelaId,
+          };
+          
+          transactions.push(transaction);
+        }
+        
+        set((state) => ({
+          transactions: [...state.transactions, ...transactions],
         }));
       },
       
