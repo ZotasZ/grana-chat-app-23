@@ -82,17 +82,19 @@ const PAYMENT_KEYWORDS = {
   'conta': 'débito em conta',
   
   // Carteiras digitais
-  'mercado pago': 'Mercado Pago',
+  'mercado': 'Mercado',
+  'pago': 'Pago',
   'picpay': 'PicPay',
   'paypal': 'PayPal',
   'pagseguro': 'PagSeguro',
-  'google pay': 'Google Pay',
-  'apple pay': 'Apple Pay',
-  'samsung pay': 'Samsung Pay',
+  'google': 'Google',
+  'pay': 'Pay',
+  'apple': 'Apple',
+  'samsung': 'Samsung',
   'ame': 'Ame Digital',
-  'ame digital': 'Ame Digital',
-  'inter pay': 'Inter Pay',
-  'recarga pay': 'Recarga Pay',
+  'digital': 'Digital',
+  'inter': 'Inter',
+  'recarga': 'Recarga',
   
   // Vales
   'vale': 'vale',
@@ -106,18 +108,20 @@ const PAYMENT_KEYWORDS = {
   'vr': 'VR',
   'ben': 'Ben',
   'flash': 'Flash',
-  'up brasil': 'Up Brasil',
+  'up': 'Up',
+  'brasil': 'Brasil',
   
   // Bancos
   'nubank': 'Nubank',
-  'inter': 'Inter',
   'itau': 'Itaú',
   'itaú': 'Itaú',
   'santander': 'Santander',
   'bradesco': 'Bradesco',
   'caixa': 'Caixa',
   'bb': 'Banco do Brasil',
-  'banco do brasil': 'Banco do Brasil',
+  'banco': 'Banco',
+  'do': 'do',
+  'brasil': 'Brasil',
   'c6': 'C6 Bank',
   'original': 'Original',
   'next': 'Next',
@@ -128,17 +132,22 @@ const PAYMENT_KEYWORDS = {
   'mastercard': 'Mastercard',
   'elo': 'Elo',
   'amex': 'American Express',
+  'american': 'American',
+  'express': 'Express',
   'hipercard': 'Hipercard',
   
   // Outros
   'transferencia': 'transferência bancária',
   'transferência': 'transferência bancária',
+  'bancaria': 'bancária',
+  'bancária': 'bancária',
   'cheque': 'cheque',
   'saldo': 'saldo',
   'cashback': 'cashback',
-  'credito loja': 'crédito loja',
-  'crédito loja': 'crédito loja',
-  'virtual': 'virtual'
+  'loja': 'loja',
+  'virtual': 'virtual',
+  'cartao': 'cartão',
+  'cartão': 'cartão'
 };
 
 export function parseTransactionMessage(message: string): { 
@@ -208,25 +217,44 @@ function processPaymentMethod(rawPayment: string): string {
   
   // Casos especiais para cartões
   if (result.includes('crédito') || result.includes('débito')) {
-    // Se tem banco + tipo: "Inter crédito" -> "Cartão Inter Crédito"
-    // Se tem bandeira + tipo: "Visa crédito" -> "Cartão Visa Crédito"  
-    // Se só tem tipo: "crédito" -> "Cartão de Crédito"
-    
-    if (!result.toLowerCase().includes('cartão') && !result.toLowerCase().includes('cartao')) {
-      if (processedTokens.length === 1) {
-        result = `Cartão de ${result}`;
-      } else {
-        result = `Cartão ${result}`;
-      }
+    // Tratar casos como "cartão inter débito" ou "inter débito"
+    if (result.toLowerCase().includes('cartão') || result.toLowerCase().includes('cartao')) {
+      // Já tem "cartão", apenas ajustar ordem se necessário
+      result = result.replace(/cartão\s+/i, 'Cartão ');
+    } else {
+      // Não tem "cartão", adicionar no início
+      result = `Cartão ${result}`;
     }
   }
   
+  // Casos especiais para carteiras digitais
+  if (result.includes('Mercado') && result.includes('Pago')) {
+    result = result.replace(/Mercado\s+Pago/i, 'Mercado Pago');
+  }
+  
+  if (result.includes('Google') && result.includes('Pay')) {
+    result = result.replace(/Google\s+Pay/i, 'Google Pay');
+  }
+  
+  if (result.includes('Apple') && result.includes('Pay')) {
+    result = result.replace(/Apple\s+Pay/i, 'Apple Pay');
+  }
+  
+  if (result.includes('Samsung') && result.includes('Pay')) {
+    result = result.replace(/Samsung\s+Pay/i, 'Samsung Pay');
+  }
+  
+  if (result.includes('Ame') && result.includes('Digital')) {
+    result = result.replace(/Ame\s+Digital/i, 'Ame Digital');
+  }
+  
+  if (result.includes('Up') && result.includes('Brasil')) {
+    result = result.replace(/Up\s+Brasil/i, 'Up Brasil');
+  }
+  
   // Casos especiais para PIX
-  if (result.toLowerCase().includes('pix') && processedTokens.length > 1) {
-    // "pix inter" -> "PIX Inter"
+  if (result.toLowerCase().includes('pix')) {
     result = result.replace(/pix/i, 'PIX');
-  } else if (result.toLowerCase() === 'pix') {
-    result = 'PIX';
   }
   
   return result;
