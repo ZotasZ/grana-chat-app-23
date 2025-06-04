@@ -68,98 +68,70 @@ const CATEGORIAS: Record<string, { categoria: string; icone: string; cor: string
   'limpeza': { categoria: 'Casa', icone: '🧽', cor: '#82E0AA' },
 };
 
-// Mapeamento flexível para formas de pagamento
-const PAYMENT_KEYWORDS: Record<string, string> = {
-  // PIX e variações
-  'pix': 'PIX',
-  'fotos': 'PIX',
-  'pixels': 'PIX',
-  'px': 'PIX',
-  'pixe': 'PIX',
+// Mapeamento robusto para formas de pagamento - separando claramente crédito e débito
+const PAYMENT_KEYWORDS = {
+  // CRÉDITO - palavras que indicam especificamente cartão de crédito
+  credito: [
+    'credito', 'crédito', 'credit', 'cc', 'cartao credito', 'cartão crédito',
+    'cartao de credito', 'cartão de crédito', 'cartaocredito', 'cartãocrédito',
+    'visa credito', 'visa crédito', 'master credito', 'mastercard credito',
+    'elo credito', 'hipercard', 'american express', 'amex', 'cartcred',
+    'cred', 'credcard', 'creditcard'
+  ],
   
-  // Cartão de crédito
-  'credito': 'Cartão de Crédito',
-  'crédito': 'Cartão de Crédito',
-  'credit': 'Cartão de Crédito',
-  'cartao': 'Cartão de Crédito',
-  'cartão': 'Cartão de Crédito',
-  'card': 'Cartão de Crédito',
-  'cartaoA': 'Cartão de Crédito',
+  // DÉBITO - palavras que indicam especificamente cartão de débito
+  debito: [
+    'debito', 'débito', 'debit', 'cd', 'cartao debito', 'cartão débito',
+    'cartao de debito', 'cartão de débito', 'cartaodebito', 'cartãodébito',
+    'visa debito', 'visa débito', 'master debito', 'mastercard debito',
+    'elo debito', 'cartdeb', 'deb', 'debcard', 'debitcard'
+  ],
   
-  // Cartão de débito
-  'debito': 'Cartão de Débito',
-  'débito': 'Cartão de Débito',
-  'debit': 'Cartão de Débito',
-  'deb': 'Cartão de Débito',
+  // PIX
+  pix: [
+    'pix', 'px', 'pixe', 'fotos', 'pixels', 'pic', 'pik'
+  ],
   
-  // Dinheiro
-  'dinheiro': 'Dinheiro',
-  'especie': 'Dinheiro',
-  'espécie': 'Dinheiro',
-  'cash': 'Dinheiro',
-  'din': 'Dinheiro',
+  // DINHEIRO
+  dinheiro: [
+    'dinheiro', 'din', 'especie', 'espécie', 'cash', 'money', 'grana',
+    'nota', 'papel', 'fisico', 'físico'
+  ],
   
-  // Boleto
-  'boleto': 'Boleto',
-  'bol': 'Boleto',
-  'bloco': 'Boleto',
-  'bancario': 'Boleto Bancário',
-  'bancário': 'Boleto Bancário',
+  // BOLETO
+  boleto: [
+    'boleto', 'bol', 'bloco', 'bancario', 'bancário', 'cobranca', 'cobrança'
+  ],
   
-  // Carteiras digitais
-  'mercado': 'Mercado Pago',
-  'pago': 'Mercado Pago',
-  'mpago': 'Mercado Pago',
-  'picpay': 'PicPay',
-  'paypal': 'PayPal',
-  'pagseguro': 'PagSeguro',
-  'google': 'Google Pay',
-  'pay': 'Google Pay',
-  'apple': 'Apple Pay',
-  'samsung': 'Samsung Pay',
-  'ame': 'Ame Digital',
+  // CARTEIRAS DIGITAIS
+  mercadopago: [
+    'mercado pago', 'mercadopago', 'mpago', 'mp', 'mercado'
+  ],
   
-  // Vales
-  'vale': 'Vale',
-  'alimentacao': 'Vale Alimentação',
-  'alimentação': 'Vale Alimentação',
-  'refeicao': 'Vale Refeição',
-  'refeição': 'Vale Refeição',
-  'sodexo': 'Sodexo',
-  'sodx': 'Sodexo',
-  'alelo': 'Alelo',
-  'ticket': 'Ticket',
-  'vr': 'VR',
-  'ben': 'Ben',
-  'flash': 'Flash',
-  'up': 'Up',
+  picpay: [
+    'picpay', 'pic pay', 'pp', 'pic'
+  ],
   
-  // Bancos específicos
-  'nubank': 'Cartão Nubank',
-  'nu': 'Cartão Nubank',
-  'itau': 'Cartão Itaú',
-  'itaú': 'Cartão Itaú',
-  'santander': 'Cartão Santander',
-  'bradesco': 'Cartão Bradesco',
-  'caixa': 'Cartão Caixa',
-  'cxa': 'Cartão Caixa',
-  'bb': 'Cartão Banco do Brasil',
-  'c6': 'Cartão C6 Bank',
-  'inter': 'Cartão Inter',
-  'next': 'Cartão Next',
-  'neon': 'Cartão Neon',
+  // VALE ALIMENTAÇÃO/REFEIÇÃO
+  valealimentacao: [
+    'vale alimentacao', 'vale alimentação', 'va', 'valeal', 'sodexo',
+    'alelo', 'ticket', 'vr', 'ben', 'flash', 'up', 'verde'
+  ],
   
-  // Transferências
-  'transferencia': 'Transferência Bancária',
-  'transferência': 'Transferência Bancária',
-  'ted': 'TED',
-  'doc': 'DOC',
+  valerefeicao: [
+    'vale refeicao', 'vale refeição', 'vr', 'valref', 'refeicao',
+    'refeição', 'almoco', 'almoço'
+  ],
   
-  // Outros
-  'cheque': 'Cheque',
-  'automatico': 'Débito Automático',
-  'automático': 'Débito Automático',
-  'conta': 'Débito em Conta'
+  // TRANSFERÊNCIA
+  transferencia: [
+    'transferencia', 'transferência', 'ted', 'doc', 'transf'
+  ],
+  
+  // OUTROS
+  outros: [
+    'cheque', 'automatico', 'automático', 'conta'
+  ]
 };
 
 // Palavras que indicam frases naturais para filtrar
@@ -171,6 +143,12 @@ const NATURAL_WORDS = [
   'pagamento', 'transação', 'transacao', 'valor'
 ];
 
+interface PaymentValidationResult {
+  formaPagamento: string;
+  confianca: number;
+  conflitos: string[];
+}
+
 export function parseTransactionMessage(message: string): { 
   descricao: string; 
   valor: number; 
@@ -178,6 +156,7 @@ export function parseTransactionMessage(message: string): {
   categoria: string;
   icone: string;
   cor: string;
+  validacao?: PaymentValidationResult;
 } | null {
   console.log('🔍 Parsing message:', message);
   
@@ -218,46 +197,22 @@ export function parseTransactionMessage(message: string): {
   
   console.log('🔤 Tokens extraídos:', tokens);
   
-  // Identificar forma de pagamento
-  let formaPagamento: string | undefined;
-  let paymentTokens: string[] = [];
+  // Identificar forma de pagamento com validação robusta
+  const paymentValidation = validatePaymentMethod(tokens, remainingMessage);
   let descriptionTokens: string[] = [];
   
-  for (const token of tokens) {
-    let foundPayment = false;
-    
-    // Verificar correspondência exata
-    if (PAYMENT_KEYWORDS[token]) {
-      paymentTokens.push(token);
-      foundPayment = true;
-    } else {
-      // Verificar correspondência parcial
-      for (const [key, payment] of Object.entries(PAYMENT_KEYWORDS)) {
-        if (token.includes(key) || key.includes(token)) {
-          paymentTokens.push(token);
-          foundPayment = true;
-          break;
-        }
-      }
-    }
-    
-    if (!foundPayment) {
-      descriptionTokens.push(token);
-    }
-  }
-  
-  // Processar forma de pagamento se encontrada
-  if (paymentTokens.length > 0) {
-    formaPagamento = processPaymentMethod(paymentTokens.join(' '));
-    console.log('💳 Forma de pagamento identificada:', formaPagamento);
+  // Remover tokens de pagamento dos tokens de descrição
+  if (paymentValidation.formaPagamento) {
+    descriptionTokens = tokens.filter(token => !isPaymentToken(token));
+  } else {
+    descriptionTokens = tokens;
   }
   
   // Criar descrição a partir dos tokens restantes
   let descricao = descriptionTokens.join(' ').trim();
   
-  // Se não há descrição, usar uma genérica baseada na categoria
+  // Se não há descrição, usar uma genérica
   if (!descricao) {
-    const categoriaInfo = findCategory('gasto');
     descricao = 'Gasto';
   } else {
     // Limpar descrição de palavras desnecessárias
@@ -273,7 +228,8 @@ export function parseTransactionMessage(message: string): {
   const result = {
     descricao,
     valor,
-    formaPagamento,
+    formaPagamento: paymentValidation.formaPagamento,
+    validacao: paymentValidation,
     ...categoriaInfo
   };
   
@@ -281,49 +237,117 @@ export function parseTransactionMessage(message: string): {
   return result;
 }
 
-function processPaymentMethod(rawPayment: string): string {
-  console.log('🔧 Processando forma de pagamento:', rawPayment);
+function validatePaymentMethod(tokens: string[], fullMessage: string): PaymentValidationResult {
+  console.log('🔧 Validando forma de pagamento:', tokens);
   
-  const tokens = rawPayment.toLowerCase().split(/\s+/);
-  let result = '';
+  const detectedPayments: { tipo: string; confianca: number; palavras: string[] }[] = [];
+  const conflitos: string[] = [];
   
-  // Identificar o tipo principal de pagamento
-  for (const token of tokens) {
-    if (PAYMENT_KEYWORDS[token]) {
-      result = PAYMENT_KEYWORDS[token];
-      break;
-    }
+  // Verificar cada categoria de pagamento
+  for (const [categoria, keywords] of Object.entries(PAYMENT_KEYWORDS)) {
+    const foundKeywords: string[] = [];
+    let maxConfianca = 0;
     
-    // Verificar correspondência parcial
-    for (const [key, payment] of Object.entries(PAYMENT_KEYWORDS)) {
-      if (token.includes(key) || key.includes(token)) {
-        result = payment;
-        break;
+    for (const keyword of keywords) {
+      // Verificar se algum token contém a palavra-chave
+      for (const token of tokens) {
+        if (token.includes(keyword) || keyword.includes(token)) {
+          foundKeywords.push(keyword);
+          // Confiança baseada na correspondência exata vs parcial
+          const confianca = token === keyword ? 1.0 : 0.7;
+          maxConfianca = Math.max(maxConfianca, confianca);
+        }
+      }
+      
+      // Verificar também na mensagem completa para frases
+      if (fullMessage.includes(keyword)) {
+        foundKeywords.push(keyword);
+        maxConfianca = Math.max(maxConfianca, 0.8);
       }
     }
     
-    if (result) break;
-  }
-  
-  // Se não encontrou nada específico, usar o primeiro token capitalizado
-  if (!result) {
-    result = tokens[0]?.charAt(0).toUpperCase() + tokens[0]?.slice(1) || 'Outros';
-  }
-  
-  // Ajustar para incluir informações de banco se mencionado
-  const bankTokens = tokens.filter(t => 
-    ['nubank', 'nu', 'itau', 'itaú', 'santander', 'bradesco', 'caixa', 'cxa', 'inter', 'c6', 'bb'].includes(t)
-  );
-  
-  if (bankTokens.length > 0 && !result.includes('Cartão')) {
-    const bank = PAYMENT_KEYWORDS[bankTokens[0]];
-    if (bank) {
-      result = bank;
+    if (foundKeywords.length > 0) {
+      detectedPayments.push({
+        tipo: categoria,
+        confianca: maxConfianca,
+        palavras: foundKeywords
+      });
     }
   }
   
-  console.log('💳 Forma de pagamento processada:', result);
+  console.log('🎯 Pagamentos detectados:', detectedPayments);
+  
+  // Verificar conflitos entre crédito e débito
+  const hasCredito = detectedPayments.some(p => p.tipo === 'credito');
+  const hasDebito = detectedPayments.some(p => p.tipo === 'debito');
+  
+  if (hasCredito && hasDebito) {
+    conflitos.push('Conflito detectado entre crédito e débito');
+    console.log('⚠️ Conflito: crédito e débito detectados simultaneamente');
+  }
+  
+  // Selecionar o pagamento com maior confiança
+  let selectedPayment = detectedPayments.reduce((prev, current) => 
+    (current.confianca > prev.confianca) ? current : prev, 
+    { tipo: '', confianca: 0, palavras: [] }
+  );
+  
+  // Se há conflito, priorizar a palavra mais específica
+  if (conflitos.length > 0) {
+    const creditoPayment = detectedPayments.find(p => p.tipo === 'credito');
+    const debitoPayment = detectedPayments.find(p => p.tipo === 'debito');
+    
+    // Se uma das palavras é mais específica, usar ela
+    if (creditoPayment && debitoPayment) {
+      const creditoEspecifico = creditoPayment.palavras.some(p => 
+        ['cartao credito', 'cartão crédito', 'credito', 'crédito'].includes(p)
+      );
+      const debitoEspecifico = debitoPayment.palavras.some(p => 
+        ['cartao debito', 'cartão débito', 'debito', 'débito'].includes(p)
+      );
+      
+      if (creditoEspecifico && !debitoEspecifico) {
+        selectedPayment = creditoPayment;
+      } else if (debitoEspecifico && !creditoEspecifico) {
+        selectedPayment = debitoPayment;
+      }
+    }
+  }
+  
+  // Mapear para nome amigável
+  const paymentNames: Record<string, string> = {
+    credito: 'Cartão de Crédito',
+    debito: 'Cartão de Débito',
+    pix: 'PIX',
+    dinheiro: 'Dinheiro',
+    boleto: 'Boleto',
+    mercadopago: 'Mercado Pago',
+    picpay: 'PicPay',
+    valealimentacao: 'Vale Alimentação',
+    valerefeicao: 'Vale Refeição',
+    transferencia: 'Transferência',
+    outros: 'Outros'
+  };
+  
+  const result: PaymentValidationResult = {
+    formaPagamento: selectedPayment.tipo ? paymentNames[selectedPayment.tipo] || 'Outros' : '',
+    confianca: selectedPayment.confianca,
+    conflitos
+  };
+  
+  console.log('💳 Validação de pagamento:', result);
   return result;
+}
+
+function isPaymentToken(token: string): boolean {
+  for (const keywords of Object.values(PAYMENT_KEYWORDS)) {
+    for (const keyword of keywords) {
+      if (token.includes(keyword) || keyword.includes(token)) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 function findCategory(descricao: string): { categoria: string; icone: string; cor: string } {

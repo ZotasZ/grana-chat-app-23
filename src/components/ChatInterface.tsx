@@ -1,15 +1,17 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, MessageCircle } from 'lucide-react';
+import { Send, MessageCircle, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useTransactionStore } from '../stores/transactionStore';
 import { parseTransactionMessage, formatCurrency, formatTime } from '../utils/transactionParser';
 import { ChatMessage } from '../types/Transaction';
+import { PaymentValidationAlert } from './PaymentValidationAlert';
 
 export function ChatInterface() {
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [lastValidation, setLastValidation] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { addTransaction, addChatMessage, chatMessages, getRecentTransactions, getTotalByPeriod } = useTransactionStore();
 
@@ -65,7 +67,17 @@ export function ChatInterface() {
 
       addTransaction(transaction);
 
-      const confirmationMessage = `✅ Gasto registrado!\n${parsedTransaction.icone} ${parsedTransaction.categoria}: ${formatCurrency(parsedTransaction.valor)}\n${parsedTransaction.formaPagamento ? `💳 Forma de pagamento: ${parsedTransaction.formaPagamento}\n` : ''}📅 ${new Date().toLocaleDateString('pt-BR')}`;
+      // Preparar mensagem de confirmação
+      let confirmationMessage = `✅ Gasto registrado!\n${parsedTransaction.icone} ${parsedTransaction.categoria}: ${formatCurrency(parsedTransaction.valor)}\n${parsedTransaction.formaPagamento ? `💳 Forma de pagamento: ${parsedTransaction.formaPagamento}\n` : ''}📅 ${new Date().toLocaleDateString('pt-BR')}`;
+
+      // Adicionar avisos de validação se houver conflitos
+      if (parsedTransaction.validacao?.conflitos.length > 0) {
+        confirmationMessage += `\n\n⚠️ Atenção: ${parsedTransaction.validacao.conflitos.join(', ')}`;
+        setLastValidation(parsedTransaction.validacao);
+      } else if (parsedTransaction.validacao?.confianca < 0.7) {
+        confirmationMessage += `\n\n🤔 Forma de pagamento detectada com ${Math.round(parsedTransaction.validacao.confianca * 100)}% de confiança`;
+        setLastValidation(parsedTransaction.validacao);
+      }
 
       const assistantMessage: Omit<ChatMessage, 'id'> = {
         tipo: 'assistant',
@@ -78,7 +90,7 @@ export function ChatInterface() {
     } else {
       const assistantMessage: Omit<ChatMessage, 'id'> = {
         tipo: 'assistant',
-        conteudo: '🤔 Não consegui entender. Tente algo como:\n• "ifood 44,00"\n• "uber 15 pix"\n• "mercado 120 cartão"',
+        conteudo: '🤔 Não consegui entender. Tente algo como:\n• "ifood 44,00 crédito"\n• "uber 15 pix"\n• "mercado 120 cartão débito"',
         timestamp: new Date(),
       };
 
@@ -144,32 +156,45 @@ export function ChatInterface() {
             <p className="text-lg font-medium mb-2">Olá! 👋</p>
             <p className="text-sm">Registre seus gastos de forma simples:</p>
             <div className="mt-4 space-y-2 text-xs">
-              <p>• "ifood 44,00"</p>
+              <p>• "ifood 44,00 crédito"</p>
               <p>• "uber 15 pix"</p>
-              <p>• "mercado 120 cartão"</p>
+              <p>• "mercado 120 cartão débito"</p>
             </div>
           </div>
         )}
 
         {chatMessages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.tipo === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
+          <div key={message.id}>
             <div
-              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg shadow-sm ${
-                message.tipo === 'user'
-                  ? 'whatsapp-green text-white'
-                  : 'bg-white text-gray-800 border'
-              }`}
+              className={`flex ${message.tipo === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <p className="whitespace-pre-line text-sm">{message.conteudo}</p>
-              <p className={`text-xs mt-1 ${
-                message.tipo === 'user' ? 'text-green-100' : 'text-gray-500'
-              }`}>
-                {formatTime(new Date(message.timestamp))}
-              </p>
+              <div
+                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg shadow-sm ${
+                  message.tipo === 'user'
+                    ? 'whatsapp-green text-white'
+                    : 'bg-white text-gray-800 border'
+                }`}
+              >
+                <p className="whitespace-pre-line text-sm">{message.conteudo}</p>
+                <p className={`text-xs mt-1 ${
+                  message.tipo === 'user' ? 'text-green-100' : 'text-gray-500'
+                }`}>
+                  {formatTime(new Date(message.timestamp))}
+                </p>
+              </div>
             </div>
+            
+            {/* Mostrar alerta de validação apenas para a última mensagem do assistente com transação */}
+            {message.tipo === 'assistant' && message.transacao && lastValidation && (
+              <PaymentValidationAlert 
+                validacao={lastValidation}
+                onConfirm={() => setLastValidation(null)}
+                onEdit={() => {
+                  setInputMessage(`${message.transacao?.descricao} ${message.transacao?.valor}`);
+                  setLastValidation(null);
+                }}
+              />
+            )}
           </div>
         ))}
 
