@@ -18,6 +18,8 @@ const CATEGORIAS: Record<string, { categoria: string; icone: string; cor: string
   'padaria': { categoria: 'Alimentação', icone: '🥖', cor: '#FF6B6B' },
   'lanchonete': { categoria: 'Alimentação', icone: '🍔', cor: '#FF6B6B' },
   'comida': { categoria: 'Alimentação', icone: '🍽️', cor: '#FF6B6B' },
+  'presente': { categoria: 'Presentes', icone: '🎁', cor: '#E67E22' },
+  'gift': { categoria: 'Presentes', icone: '🎁', cor: '#E67E22' },
   
   // Transporte
   'uber': { categoria: 'Transporte', icone: '🚗', cor: '#4ECDC4' },
@@ -196,8 +198,8 @@ export function parseTransactionMessage(message: string): ParsedTransaction | nu
     valor = 0;
   }
   
-  // Calcular valor da parcela
-  const valorParcela = totalParcelas > 1 ? valor / totalParcelas : valor;
+  // Calcular valor da parcela - mudando para let para permitir reatribuição
+  let valorParcela = totalParcelas > 1 ? valor / totalParcelas : valor;
   
   // Remover o valor da mensagem para processar o resto
   let remainingMessage = cleanMessage;
