@@ -1,4 +1,3 @@
-
 import { Transaction } from '../types/Transaction';
 
 const CATEGORIAS: Record<string, { categoria: string; icone: string; cor: string }> = {
@@ -123,7 +122,6 @@ const PAYMENT_KEYWORDS = {
   'original': 'Original',
   'next': 'Next',
   'neon': 'Neon',
-  'picpay': 'PicPay',
   
   // Bandeiras
   'visa': 'Visa',
