@@ -1,15 +1,24 @@
+
 import { Transaction } from '../types/Transaction';
 
 const CATEGORIAS: Record<string, { categoria: string; icone: string; cor: string }> = {
   // Alimentação
   'ifood': { categoria: 'Alimentação', icone: '🍔', cor: '#FF6B6B' },
+  'ifd': { categoria: 'Alimentação', icone: '🍔', cor: '#FF6B6B' },
   'uber eats': { categoria: 'Alimentação', icone: '🍔', cor: '#FF6B6B' },
   'restaurante': { categoria: 'Alimentação', icone: '🍽️', cor: '#FF6B6B' },
   'lanche': { categoria: 'Alimentação', icone: '🥪', cor: '#FF6B6B' },
+  'almoço': { categoria: 'Alimentação', icone: '🍽️', cor: '#FF6B6B' },
+  'almoco': { categoria: 'Alimentação', icone: '🍽️', cor: '#FF6B6B' },
+  'jantar': { categoria: 'Alimentação', icone: '🍽️', cor: '#FF6B6B' },
+  'café': { categoria: 'Alimentação', icone: '☕', cor: '#FF6B6B' },
+  'cafe': { categoria: 'Alimentação', icone: '☕', cor: '#FF6B6B' },
   'pizza': { categoria: 'Alimentação', icone: '🍕', cor: '#FF6B6B' },
   'mercado': { categoria: 'Alimentação', icone: '🛒', cor: '#FF6B6B' },
   'supermercado': { categoria: 'Alimentação', icone: '🛒', cor: '#FF6B6B' },
   'padaria': { categoria: 'Alimentação', icone: '🥖', cor: '#FF6B6B' },
+  'lanchonete': { categoria: 'Alimentação', icone: '🍔', cor: '#FF6B6B' },
+  'comida': { categoria: 'Alimentação', icone: '🍽️', cor: '#FF6B6B' },
   
   // Transporte
   'uber': { categoria: 'Transporte', icone: '🚗', cor: '#4ECDC4' },
@@ -17,19 +26,27 @@ const CATEGORIAS: Record<string, { categoria: string; icone: string; cor: string
   'taxi': { categoria: 'Transporte', icone: '🚕', cor: '#4ECDC4' },
   'gasolina': { categoria: 'Transporte', icone: '⛽', cor: '#4ECDC4' },
   'combustível': { categoria: 'Transporte', icone: '⛽', cor: '#4ECDC4' },
+  'combustivel': { categoria: 'Transporte', icone: '⛽', cor: '#4ECDC4' },
   'ônibus': { categoria: 'Transporte', icone: '🚌', cor: '#4ECDC4' },
+  'onibus': { categoria: 'Transporte', icone: '🚌', cor: '#4ECDC4' },
   'metro': { categoria: 'Transporte', icone: '🚇', cor: '#4ECDC4' },
+  'metrô': { categoria: 'Transporte', icone: '🚇', cor: '#4ECDC4' },
   'estacionamento': { categoria: 'Transporte', icone: '🅿️', cor: '#4ECDC4' },
+  'transporte': { categoria: 'Transporte', icone: '🚗', cor: '#4ECDC4' },
   
   // Saúde
   'farmácia': { categoria: 'Saúde', icone: '💊', cor: '#45B7D1' },
+  'farmacia': { categoria: 'Saúde', icone: '💊', cor: '#45B7D1' },
   'médico': { categoria: 'Saúde', icone: '👨‍⚕️', cor: '#45B7D1' },
+  'medico': { categoria: 'Saúde', icone: '👨‍⚕️', cor: '#45B7D1' },
   'dentista': { categoria: 'Saúde', icone: '🦷', cor: '#45B7D1' },
   'exame': { categoria: 'Saúde', icone: '🔬', cor: '#45B7D1' },
   'remédio': { categoria: 'Saúde', icone: '💊', cor: '#45B7D1' },
+  'remedio': { categoria: 'Saúde', icone: '💊', cor: '#45B7D1' },
   
   // Lazer
   'cinema': { categoria: 'Lazer', icone: '🎬', cor: '#F7DC6F' },
+  'cin': { categoria: 'Lazer', icone: '🎬', cor: '#F7DC6F' },
   'streaming': { categoria: 'Lazer', icone: '📺', cor: '#F7DC6F' },
   'netflix': { categoria: 'Lazer', icone: '📺', cor: '#F7DC6F' },
   'spotify': { categoria: 'Lazer', icone: '🎵', cor: '#F7DC6F' },
@@ -46,109 +63,113 @@ const CATEGORIAS: Record<string, { categoria: string; icone: string; cor: string
   'aluguel': { categoria: 'Casa', icone: '🏠', cor: '#82E0AA' },
   'luz': { categoria: 'Casa', icone: '💡', cor: '#82E0AA' },
   'água': { categoria: 'Casa', icone: '💧', cor: '#82E0AA' },
+  'agua': { categoria: 'Casa', icone: '💧', cor: '#82E0AA' },
   'internet': { categoria: 'Casa', icone: '📶', cor: '#82E0AA' },
   'limpeza': { categoria: 'Casa', icone: '🧽', cor: '#82E0AA' },
 };
 
-// Mapas para normalizar formas de pagamento
-const PAYMENT_KEYWORDS = {
-  // Cartão de Crédito
-  'credito': 'crédito',
-  'crédito': 'crédito',
-  'credit': 'crédito',
+// Mapeamento flexível para formas de pagamento
+const PAYMENT_KEYWORDS: Record<string, string> = {
+  // PIX e variações
+  'pix': 'PIX',
+  'fotos': 'PIX',
+  'pixels': 'PIX',
+  'px': 'PIX',
+  'pixe': 'PIX',
   
-  // Cartão de Débito  
-  'debito': 'débito',
-  'débito': 'débito',
-  'debit': 'débito',
+  // Cartão de crédito
+  'credito': 'Cartão de Crédito',
+  'crédito': 'Cartão de Crédito',
+  'credit': 'Cartão de Crédito',
+  'cartao': 'Cartão de Crédito',
+  'cartão': 'Cartão de Crédito',
+  'card': 'Cartão de Crédito',
+  'cartaoA': 'Cartão de Crédito',
   
-  // PIX
-  'pix': 'pix',
+  // Cartão de débito
+  'debito': 'Cartão de Débito',
+  'débito': 'Cartão de Débito',
+  'debit': 'Cartão de Débito',
+  'deb': 'Cartão de Débito',
   
   // Dinheiro
-  'dinheiro': 'dinheiro',
-  'especie': 'dinheiro',
-  'espécie': 'dinheiro',
-  'cash': 'dinheiro',
+  'dinheiro': 'Dinheiro',
+  'especie': 'Dinheiro',
+  'espécie': 'Dinheiro',
+  'cash': 'Dinheiro',
+  'din': 'Dinheiro',
   
   // Boleto
-  'boleto': 'boleto',
-  'bancario': 'boleto bancário',
-  'bancário': 'boleto bancário',
-  
-  // Débito em conta
-  'automatico': 'débito automático',
-  'automático': 'débito automático',
-  'conta': 'débito em conta',
+  'boleto': 'Boleto',
+  'bol': 'Boleto',
+  'bloco': 'Boleto',
+  'bancario': 'Boleto Bancário',
+  'bancário': 'Boleto Bancário',
   
   // Carteiras digitais
-  'mercado': 'Mercado',
-  'pago': 'Pago',
+  'mercado': 'Mercado Pago',
+  'pago': 'Mercado Pago',
+  'mpago': 'Mercado Pago',
   'picpay': 'PicPay',
   'paypal': 'PayPal',
   'pagseguro': 'PagSeguro',
-  'google': 'Google',
-  'pay': 'Pay',
-  'apple': 'Apple',
-  'samsung': 'Samsung',
+  'google': 'Google Pay',
+  'pay': 'Google Pay',
+  'apple': 'Apple Pay',
+  'samsung': 'Samsung Pay',
   'ame': 'Ame Digital',
-  'digital': 'Digital',
-  'inter': 'Inter',
-  'recarga': 'Recarga',
   
   // Vales
-  'vale': 'vale',
-  'alimentacao': 'vale alimentação',
-  'alimentação': 'vale alimentação',
-  'refeicao': 'vale refeição',
-  'refeição': 'vale refeição',
+  'vale': 'Vale',
+  'alimentacao': 'Vale Alimentação',
+  'alimentação': 'Vale Alimentação',
+  'refeicao': 'Vale Refeição',
+  'refeição': 'Vale Refeição',
   'sodexo': 'Sodexo',
+  'sodx': 'Sodexo',
   'alelo': 'Alelo',
   'ticket': 'Ticket',
   'vr': 'VR',
   'ben': 'Ben',
   'flash': 'Flash',
   'up': 'Up',
-  'upbrasil': 'Up Brasil',
   
-  // Bancos
-  'nubank': 'Nubank',
-  'itau': 'Itaú',
-  'itaú': 'Itaú',
-  'santander': 'Santander',
-  'bradesco': 'Bradesco',
-  'caixa': 'Caixa',
-  'bb': 'Banco do Brasil',
-  'banco': 'Banco',
-  'do': 'do',
-  'brasil': 'Brasil',
-  'c6': 'C6 Bank',
-  'original': 'Original',
-  'next': 'Next',
-  'neon': 'Neon',
+  // Bancos específicos
+  'nubank': 'Cartão Nubank',
+  'nu': 'Cartão Nubank',
+  'itau': 'Cartão Itaú',
+  'itaú': 'Cartão Itaú',
+  'santander': 'Cartão Santander',
+  'bradesco': 'Cartão Bradesco',
+  'caixa': 'Cartão Caixa',
+  'cxa': 'Cartão Caixa',
+  'bb': 'Cartão Banco do Brasil',
+  'c6': 'Cartão C6 Bank',
+  'inter': 'Cartão Inter',
+  'next': 'Cartão Next',
+  'neon': 'Cartão Neon',
   
-  // Bandeiras
-  'visa': 'Visa',
-  'mastercard': 'Mastercard',
-  'elo': 'Elo',
-  'amex': 'American Express',
-  'american': 'American',
-  'express': 'Express',
-  'hipercard': 'Hipercard',
+  // Transferências
+  'transferencia': 'Transferência Bancária',
+  'transferência': 'Transferência Bancária',
+  'ted': 'TED',
+  'doc': 'DOC',
   
   // Outros
-  'transferencia': 'transferência bancária',
-  'transferência': 'transferência bancária',
-  'bancaria': 'bancária',
-  'bancária': 'bancária',
-  'cheque': 'cheque',
-  'saldo': 'saldo',
-  'cashback': 'cashback',
-  'loja': 'loja',
-  'virtual': 'virtual',
-  'cartao': 'cartão',
-  'cartão': 'cartão'
+  'cheque': 'Cheque',
+  'automatico': 'Débito Automático',
+  'automático': 'Débito Automático',
+  'conta': 'Débito em Conta'
 };
+
+// Palavras que indicam frases naturais para filtrar
+const NATURAL_WORDS = [
+  'gastei', 'paguei', 'comprei', 'pago', 'gasto', 'compra',
+  'no', 'na', 'do', 'da', 'com', 'via', 'pelo', 'pela',
+  'hoje', 'ontem', 'amanha', 'amanhã', 'semana', 'mês', 'mes',
+  'reais', 'real', 'r$', 'rs', 'brl',
+  'pagamento', 'transação', 'transacao', 'valor'
+];
 
 export function parseTransactionMessage(message: string): { 
   descricao: string; 
@@ -158,119 +179,168 @@ export function parseTransactionMessage(message: string): {
   icone: string;
   cor: string;
 } | null {
-  // Remove espaços extras e converte para minúsculas
-  const cleanMessage = message.trim().toLowerCase();
+  console.log('🔍 Parsing message:', message);
   
-  // Regex mais flexível para capturar: descrição + valor + forma de pagamento (múltiplas palavras)
-  const patterns = [
-    // Padrão: "ifood 44,00 cartao inter credito" ou qualquer coisa após o valor
-    /^(.+?)\s+([\d,\.]+)\s+(.+)$/,
-    // Padrão: "ifood 44,00" ou "ifood 44.00"
-    /^(.+?)\s+([\d,\.]+)$/,
-  ];
+  // Limpar e normalizar a mensagem
+  let cleanMessage = message.trim().toLowerCase();
   
-  for (const pattern of patterns) {
-    const match = cleanMessage.match(pattern);
-    if (match) {
-      const descricao = match[1].trim();
-      const valorStr = match[2].replace(',', '.');
-      const valor = parseFloat(valorStr);
-      const formaPagamentoRaw = match[3]?.trim();
-      
-      if (isNaN(valor) || valor <= 0) continue;
-      
-      // Buscar categoria baseada na descrição
-      const categoriaInfo = findCategory(descricao);
-      
-      // Processar forma de pagamento se fornecida
-      const formaPagamento = formaPagamentoRaw ? processPaymentMethod(formaPagamentoRaw) : undefined;
-      
-      return {
-        descricao,
-        valor,
-        formaPagamento,
-        ...categoriaInfo
-      };
+  // Remover símbolos de moeda
+  cleanMessage = cleanMessage.replace(/r\$\s*/g, '');
+  
+  // Extrair valor usando regex mais robusta
+  const valorMatches = cleanMessage.match(/\b(\d{1,6}(?:[,\.]\d{1,2})?)\b/g);
+  if (!valorMatches) {
+    console.log('❌ Nenhum valor encontrado');
+    return null;
+  }
+  
+  // Pegar o primeiro valor encontrado e converter
+  const valorStr = valorMatches[0].replace(',', '.');
+  const valor = parseFloat(valorStr);
+  
+  if (isNaN(valor) || valor <= 0) {
+    console.log('❌ Valor inválido:', valorStr);
+    return null;
+  }
+  
+  console.log('💰 Valor encontrado:', valor);
+  
+  // Remover o valor da mensagem para processar o resto
+  let remainingMessage = cleanMessage.replace(valorStr.replace('.', ','), '').replace(valorStr, '');
+  
+  // Dividir em tokens
+  const tokens = remainingMessage.split(/\s+/).filter(token => 
+    token.length > 0 && 
+    !NATURAL_WORDS.includes(token) &&
+    token !== valorStr &&
+    token !== valorStr.replace('.', ',')
+  );
+  
+  console.log('🔤 Tokens extraídos:', tokens);
+  
+  // Identificar forma de pagamento
+  let formaPagamento: string | undefined;
+  let paymentTokens: string[] = [];
+  let descriptionTokens: string[] = [];
+  
+  for (const token of tokens) {
+    let foundPayment = false;
+    
+    // Verificar correspondência exata
+    if (PAYMENT_KEYWORDS[token]) {
+      paymentTokens.push(token);
+      foundPayment = true;
+    } else {
+      // Verificar correspondência parcial
+      for (const [key, payment] of Object.entries(PAYMENT_KEYWORDS)) {
+        if (token.includes(key) || key.includes(token)) {
+          paymentTokens.push(token);
+          foundPayment = true;
+          break;
+        }
+      }
+    }
+    
+    if (!foundPayment) {
+      descriptionTokens.push(token);
     }
   }
   
-  return null;
+  // Processar forma de pagamento se encontrada
+  if (paymentTokens.length > 0) {
+    formaPagamento = processPaymentMethod(paymentTokens.join(' '));
+    console.log('💳 Forma de pagamento identificada:', formaPagamento);
+  }
+  
+  // Criar descrição a partir dos tokens restantes
+  let descricao = descriptionTokens.join(' ').trim();
+  
+  // Se não há descrição, usar uma genérica baseada na categoria
+  if (!descricao) {
+    const categoriaInfo = findCategory('gasto');
+    descricao = 'Gasto';
+  } else {
+    // Limpar descrição de palavras desnecessárias
+    descricao = descricao.replace(/\b(de|do|da|no|na|com|via|pelo|pela)\b/g, '').trim();
+  }
+  
+  console.log('📝 Descrição final:', descricao);
+  
+  // Buscar categoria baseada na descrição
+  const categoriaInfo = findCategory(descricao);
+  console.log('📂 Categoria identificada:', categoriaInfo.categoria);
+  
+  const result = {
+    descricao,
+    valor,
+    formaPagamento,
+    ...categoriaInfo
+  };
+  
+  console.log('✅ Resultado final:', result);
+  return result;
 }
 
 function processPaymentMethod(rawPayment: string): string {
+  console.log('🔧 Processando forma de pagamento:', rawPayment);
+  
   const tokens = rawPayment.toLowerCase().split(/\s+/);
-  const processedTokens: string[] = [];
+  let result = '';
   
-  // Primeiro passo: identificar e normalizar palavras-chave conhecidas
+  // Identificar o tipo principal de pagamento
   for (const token of tokens) {
-    const normalized = PAYMENT_KEYWORDS[token];
-    if (normalized) {
-      processedTokens.push(normalized);
-    } else {
-      // Manter tokens não reconhecidos mas capitalizar primeira letra
-      processedTokens.push(token.charAt(0).toUpperCase() + token.slice(1));
+    if (PAYMENT_KEYWORDS[token]) {
+      result = PAYMENT_KEYWORDS[token];
+      break;
+    }
+    
+    // Verificar correspondência parcial
+    for (const [key, payment] of Object.entries(PAYMENT_KEYWORDS)) {
+      if (token.includes(key) || key.includes(token)) {
+        result = payment;
+        break;
+      }
+    }
+    
+    if (result) break;
+  }
+  
+  // Se não encontrou nada específico, usar o primeiro token capitalizado
+  if (!result) {
+    result = tokens[0]?.charAt(0).toUpperCase() + tokens[0]?.slice(1) || 'Outros';
+  }
+  
+  // Ajustar para incluir informações de banco se mencionado
+  const bankTokens = tokens.filter(t => 
+    ['nubank', 'nu', 'itau', 'itaú', 'santander', 'bradesco', 'caixa', 'cxa', 'inter', 'c6', 'bb'].includes(t)
+  );
+  
+  if (bankTokens.length > 0 && !result.includes('Cartão')) {
+    const bank = PAYMENT_KEYWORDS[bankTokens[0]];
+    if (bank) {
+      result = bank;
     }
   }
   
-  // Segundo passo: formar a descrição final da forma de pagamento
-  let result = processedTokens.join(' ');
-  
-  // Casos especiais para cartões
-  if (result.includes('crédito') || result.includes('débito')) {
-    // Tratar casos como "cartão inter débito" ou "inter débito"
-    if (result.toLowerCase().includes('cartão') || result.toLowerCase().includes('cartao')) {
-      // Já tem "cartão", apenas ajustar ordem se necessário
-      result = result.replace(/cartão\s+/i, 'Cartão ');
-    } else {
-      // Não tem "cartão", adicionar no início
-      result = `Cartão ${result}`;
-    }
-  }
-  
-  // Casos especiais para carteiras digitais
-  if (result.includes('Mercado') && result.includes('Pago')) {
-    result = result.replace(/Mercado\s+Pago/i, 'Mercado Pago');
-  }
-  
-  if (result.includes('Google') && result.includes('Pay')) {
-    result = result.replace(/Google\s+Pay/i, 'Google Pay');
-  }
-  
-  if (result.includes('Apple') && result.includes('Pay')) {
-    result = result.replace(/Apple\s+Pay/i, 'Apple Pay');
-  }
-  
-  if (result.includes('Samsung') && result.includes('Pay')) {
-    result = result.replace(/Samsung\s+Pay/i, 'Samsung Pay');
-  }
-  
-  if (result.includes('Ame') && result.includes('Digital')) {
-    result = result.replace(/Ame\s+Digital/i, 'Ame Digital');
-  }
-  
-  if (result.includes('Up') && result.includes('Brasil')) {
-    result = result.replace(/Up\s+Brasil/i, 'Up Brasil');
-  }
-  
-  // Casos especiais para PIX
-  if (result.toLowerCase().includes('pix')) {
-    result = result.replace(/pix/i, 'PIX');
-  }
-  
+  console.log('💳 Forma de pagamento processada:', result);
   return result;
 }
 
 function findCategory(descricao: string): { categoria: string; icone: string; cor: string } {
   const descricaoLower = descricao.toLowerCase();
   
+  console.log('🏷️ Buscando categoria para:', descricaoLower);
+  
   // Buscar correspondência exata ou parcial
   for (const [key, info] of Object.entries(CATEGORIAS)) {
     if (descricaoLower.includes(key) || key.includes(descricaoLower)) {
+      console.log('✅ Categoria encontrada:', info.categoria);
       return info;
     }
   }
   
   // Categoria padrão
+  console.log('📂 Usando categoria padrão: Outros');
   return { categoria: 'Outros', icone: '💸', cor: '#95A5A6' };
 }
 
