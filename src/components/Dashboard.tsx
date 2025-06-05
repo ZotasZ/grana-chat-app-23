@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -25,9 +26,19 @@ import {
 import { useTransactionStore } from '../stores/transactionStore';
 import { formatCurrency } from '../utils/transactionParser';
 
+const COLORS = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#F7DC6F', '#BB8FCE', '#82E0AA', '#95A5A6'];
+
+const CATEGORY_ICONS = {
+  'Alimentação': '🍔',
+  'Transporte': '🚗',
+  'Saúde': '💊',
+  'Lazer': '🎬',
+  'Casa': '🏠',
+  'Presentes': '🎁'
+} as const;
+
 export function Dashboard() {
   const { 
-    transactions, 
     selectedMonth,
     setSelectedMonth,
     getTransactionsByCategory, 
@@ -36,61 +47,75 @@ export function Dashboard() {
     getNextMonthsWithTransactions
   } = useTransactionStore();
 
-  const currentMonth = selectedMonth;
-  const availableMonths = getNextMonthsWithTransactions();
-  const currentMonthTransactions = getTransactionsByMonth(currentMonth);
+  const currentMonthTransactions = useMemo(() => 
+    getTransactionsByMonth(selectedMonth), 
+    [getTransactionsByMonth, selectedMonth]
+  );
 
-  // Dados do mês selecionado
-  const totalMes = currentMonthTransactions.reduce((sum, t) => sum + t.valor, 0);
-  const totalSemana = getTotalByPeriod(7, new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0));
-  const totalHoje = getTotalByPeriod(1);
-  const totalTransacoes = currentMonthTransactions.length;
+  const availableMonths = useMemo(() => 
+    getNextMonthsWithTransactions(), 
+    [getNextMonthsWithTransactions]
+  );
 
-  // Navegação entre meses
+  const dashboardData = useMemo(() => {
+    const totalMes = currentMonthTransactions.reduce((sum, t) => sum + t.valor, 0);
+    const totalSemana = getTotalByPeriod(7, new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0));
+    const totalHoje = getTotalByPeriod(1);
+    const totalTransacoes = currentMonthTransactions.length;
+
+    return { totalMes, totalSemana, totalHoje, totalTransacoes };
+  }, [currentMonthTransactions, getTotalByPeriod, selectedMonth]);
+
+  const categoriaData = useMemo(() => 
+    Object.entries(getTransactionsByCategory(selectedMonth)).map(([categoria, trans]) => ({
+      name: categoria,
+      value: trans.reduce((sum, t) => sum + t.valor, 0),
+      count: trans.length
+    })), 
+    [getTransactionsByCategory, selectedMonth]
+  );
+
+  const last7Days = useMemo(() => {
+    return Array.from({ length: 7 }, (_, i) => {
+      const date = new Date(selectedMonth);
+      date.setDate(date.getDate() - i);
+      const dayTransactions = currentMonthTransactions.filter(t => {
+        const tDate = new Date(t.data);
+        return tDate.toDateString() === date.toDateString();
+      });
+      
+      return {
+        day: date.toLocaleDateString('pt-BR', { weekday: 'short' }),
+        gastos: dayTransactions.reduce((sum, t) => sum + t.valor, 0)
+      };
+    }).reverse();
+  }, [currentMonthTransactions, selectedMonth]);
+
+  const recentTransactions = useMemo(() => 
+    currentMonthTransactions
+      .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
+      .slice(0, 8),
+    [currentMonthTransactions]
+  );
+
   const goToPreviousMonth = () => {
-    const newMonth = new Date(currentMonth);
+    const newMonth = new Date(selectedMonth);
     newMonth.setMonth(newMonth.getMonth() - 1);
     setSelectedMonth(newMonth);
   };
 
   const goToNextMonth = () => {
-    const newMonth = new Date(currentMonth);
+    const newMonth = new Date(selectedMonth);
     newMonth.setMonth(newMonth.getMonth() + 1);
     setSelectedMonth(newMonth);
   };
 
-  // Dados por categoria para gráfico de pizza (mês atual)
-  const categoriaData = Object.entries(getTransactionsByCategory(currentMonth)).map(([categoria, trans]) => ({
-    name: categoria,
-    value: trans.reduce((sum, t) => sum + t.valor, 0),
-    count: trans.length
-  }));
-
-  // Dados dos últimos 7 dias do mês selecionado para gráfico de barras
-  const last7Days = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date(currentMonth);
-    date.setDate(date.getDate() - i);
-    const dayTransactions = currentMonthTransactions.filter(t => {
-      const tDate = new Date(t.data);
-      return tDate.toDateString() === date.toDateString();
-    });
-    
-    return {
-      day: date.toLocaleDateString('pt-BR', { weekday: 'short' }),
-      gastos: dayTransactions.reduce((sum, t) => sum + t.valor, 0)
-    };
-  }).reverse();
-
-  const COLORS = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#F7DC6F', '#BB8FCE', '#82E0AA', '#95A5A6'];
-
-  // Transações recentes do mês
-  const recentTransactions = currentMonthTransactions
-    .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
-    .slice(0, 8);
-
-  // Função para formatar o nome do mês
   const formatMonthYear = (date: Date) => {
     return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  };
+
+  const getCategoryIcon = (categoria: string): string => {
+    return CATEGORY_ICONS[categoria as keyof typeof CATEGORY_ICONS] || '💸';
   };
 
   return (
@@ -103,13 +128,13 @@ export function Dashboard() {
         
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 capitalize">
-            {formatMonthYear(currentMonth)}
+            {formatMonthYear(selectedMonth)}
           </h2>
-          <p className="text-sm text-gray-600">
-            {currentMonthTransactions.filter(t => t.parcelado).length > 0 && 
-              `${currentMonthTransactions.filter(t => t.parcelado).length} parcela(s) programada(s)`
-            }
-          </p>
+          {currentMonthTransactions.filter(t => t.parcelado).length > 0 && (
+            <p className="text-sm text-gray-600">
+              {currentMonthTransactions.filter(t => t.parcelado).length} parcela(s) programada(s)
+            </p>
+          )}
         </div>
         
         <Button variant="outline" size="icon" onClick={goToNextMonth}>
@@ -124,8 +149,8 @@ export function Dashboard() {
             <Button
               key={month.toISOString()}
               variant={
-                month.getMonth() === currentMonth.getMonth() && 
-                month.getFullYear() === currentMonth.getFullYear() 
+                month.getMonth() === selectedMonth.getMonth() && 
+                month.getFullYear() === selectedMonth.getFullYear() 
                   ? "default" 
                   : "outline"
               }
@@ -147,9 +172,9 @@ export function Dashboard() {
             <DollarSign className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{formatCurrency(totalMes)}</div>
+            <div className="text-2xl font-bold text-red-600">{formatCurrency(dashboardData.totalMes)}</div>
             <p className="text-xs text-muted-foreground">
-              {formatMonthYear(currentMonth)}
+              {formatMonthYear(selectedMonth)}
             </p>
           </CardContent>
         </Card>
@@ -160,7 +185,7 @@ export function Dashboard() {
             <Calendar className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{formatCurrency(totalSemana)}</div>
+            <div className="text-2xl font-bold text-orange-600">{formatCurrency(dashboardData.totalSemana)}</div>
             <p className="text-xs text-muted-foreground">Últimos 7 dias</p>
           </CardContent>
         </Card>
@@ -171,7 +196,7 @@ export function Dashboard() {
             <TrendingDown className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{formatCurrency(totalHoje)}</div>
+            <div className="text-2xl font-bold text-blue-600">{formatCurrency(dashboardData.totalHoje)}</div>
             <p className="text-xs text-muted-foreground">Gastos de hoje</p>
           </CardContent>
         </Card>
@@ -182,7 +207,7 @@ export function Dashboard() {
             <ShoppingBag className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{totalTransacoes}</div>
+            <div className="text-2xl font-bold text-green-600">{dashboardData.totalTransacoes}</div>
             <p className="text-xs text-muted-foreground">Neste mês</p>
           </CardContent>
         </Card>
@@ -261,13 +286,7 @@ export function Dashboard() {
                 <div key={transaction.id} className="flex items-center justify-between p-3 bg-white border rounded-lg hover:shadow-sm transition-shadow">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-lg">
-                      {transaction.categoria === 'Alimentação' && '🍔'}
-                      {transaction.categoria === 'Transporte' && '🚗'}
-                      {transaction.categoria === 'Saúde' && '💊'}
-                      {transaction.categoria === 'Lazer' && '🎬'}
-                      {transaction.categoria === 'Casa' && '🏠'}
-                      {transaction.categoria === 'Presentes' && '🎁'}
-                      {!['Alimentação', 'Transporte', 'Saúde', 'Lazer', 'Casa', 'Presentes'].includes(transaction.categoria) && '💸'}
+                      {getCategoryIcon(transaction.categoria)}
                     </div>
                     <div>
                       <p className="font-medium text-gray-900">{transaction.descricao}</p>

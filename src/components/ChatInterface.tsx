@@ -1,21 +1,26 @@
+
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, MessageCircle, AlertTriangle, Loader2 } from 'lucide-react';
+import { Send, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useTransactionStore } from '../stores/transactionStore';
-import { parseTransactionMessage, formatCurrency, formatTime } from '../utils/transactionParser';
-import { processReceiptImage, formatReceiptSuggestion, ExtractedReceiptData } from '../utils/receiptProcessor';
-import { ChatMessage } from '../types/Transaction';
-import { PaymentValidationAlert } from './PaymentValidationAlert';
-import { ImageUpload } from './ImageUpload';
+import { useTransactionStore } from '@/stores/transactionStore';
+import { useChatMessages } from '@/hooks/useChatMessages';
+import { useOCR } from '@/hooks/useOCR';
+import { ChatMessage } from '@/components/ChatMessage';
+import { TypingIndicator } from '@/components/TypingIndicator';
+import { ImageUpload } from '@/components/ImageUpload';
+import { PaymentValidationAlert } from '@/components/PaymentValidationAlert';
+import { createReceiptAnalysisMessage, formatReceiptSuggestion } from '@/utils/receiptFormatter';
 
 export function ChatInterface() {
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [isProcessingImage, setIsProcessingImage] = useState(false);
   const [lastValidation, setLastValidation] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { addTransaction, addParceladoTransaction, addChatMessage, chatMessages, getRecentTransactions, getTotalByPeriod } = useTransactionStore();
+  
+  const { chatMessages } = useTransactionStore();
+  const { addMessage, processTransactionMessage, processQueryMessage } = useChatMessages();
+  const { isProcessing: isProcessingImage, processImage } = useOCR();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -28,16 +33,17 @@ export function ChatInterface() {
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
 
-    const userMessage: Omit<ChatMessage, 'id'> = {
-      tipo: 'user',
+    const userMessage = {
+      tipo: 'user' as const,
       conteudo: inputMessage,
       timestamp: new Date(),
     };
 
-    addChatMessage(userMessage);
+    addMessage(userMessage);
     setInputMessage('');
     setIsTyping(true);
 
+    // Simular delay de digitação
     setTimeout(() => {
       processMessage(inputMessage);
       setIsTyping(false);
@@ -48,166 +54,69 @@ export function ChatInterface() {
     const lowerMessage = message.toLowerCase();
 
     if (lowerMessage.includes('gastei') || lowerMessage.includes('gastos') || lowerMessage.includes('quanto')) {
-      handleQuery(lowerMessage);
+      processQueryMessage(lowerMessage);
       return;
     }
 
-    const parsedTransaction = parseTransactionMessage(message);
+    const success = processTransactionMessage(message);
     
-    if (parsedTransaction) {
-      const transaction = {
-        valor: parsedTransaction.valor,
-        categoria: parsedTransaction.categoria,
-        descricao: parsedTransaction.descricao,
-        data: new Date(),
-        tipo: 'gasto' as const,
-        formaPagamento: parsedTransaction.formaPagamento,
-      };
-
-      // Verificar se é parcelado
-      if (parsedTransaction.totalParcelas && parsedTransaction.totalParcelas > 1) {
-        addParceladoTransaction(transaction, parsedTransaction.totalParcelas);
-        
-        const valorTotal = parsedTransaction.valor * parsedTransaction.totalParcelas;
-        let confirmationMessage = `✅ Compra parcelada registrada!\n${parsedTransaction.icone} ${parsedTransaction.categoria}: ${formatCurrency(valorTotal)}\n💳 ${parsedTransaction.totalParcelas}x de ${formatCurrency(parsedTransaction.valor)}\n${parsedTransaction.formaPagamento ? `💳 Forma de pagamento: ${parsedTransaction.formaPagamento}\n` : ''}📅 Primeira parcela: ${new Date().toLocaleDateString('pt-BR')}\n📅 Última parcela: ${new Date(new Date().setMonth(new Date().getMonth() + parsedTransaction.totalParcelas - 1)).toLocaleDateString('pt-BR')}`;
-
-        if (parsedTransaction.validacao?.conflitos.length > 0) {
-          confirmationMessage += `\n\n⚠️ Atenção: ${parsedTransaction.validacao.conflitos.join(', ')}`;
-          setLastValidation(parsedTransaction.validacao);
-        }
-
-        const assistantMessage: Omit<ChatMessage, 'id'> = {
-          tipo: 'assistant',
-          conteudo: confirmationMessage,
-          timestamp: new Date(),
-        };
-
-        addChatMessage(assistantMessage);
-      } else {
-        // Transação única
-        addTransaction(transaction);
-
-        let confirmationMessage = `✅ Gasto registrado!\n${parsedTransaction.icone} ${parsedTransaction.categoria}: ${formatCurrency(parsedTransaction.valor)}\n${parsedTransaction.formaPagamento ? `💳 Forma de pagamento: ${parsedTransaction.formaPagamento}\n` : ''}📅 ${new Date().toLocaleDateString('pt-BR')}`;
-
-        if (parsedTransaction.validacao?.conflitos.length > 0) {
-          confirmationMessage += `\n\n⚠️ Atenção: ${parsedTransaction.validacao.conflitos.join(', ')}`;
-          setLastValidation(parsedTransaction.validacao);
-        } else if (parsedTransaction.validacao?.confianca < 0.7) {
-          confirmationMessage += `\n\n🤔 Forma de pagamento detectada com ${Math.round(parsedTransaction.validacao.confianca * 100)}% de confiança`;
-          setLastValidation(parsedTransaction.validacao);
-        }
-
-        const assistantMessage: Omit<ChatMessage, 'id'> = {
-          tipo: 'assistant',
-          conteudo: confirmationMessage,
-          timestamp: new Date(),
-          transacao: { ...transaction, id: Date.now().toString() },
-        };
-
-        addChatMessage(assistantMessage);
-      }
-    } else {
-      const assistantMessage: Omit<ChatMessage, 'id'> = {
+    if (!success) {
+      addMessage({
         tipo: 'assistant',
         conteudo: '🤔 Não consegui entender. Tente algo como:\n• "ifood 44,00 crédito"\n• "uber 15 pix"\n• "tênis 200 cartão crédito 2x"\n• "mercado 120 cartão débito"',
         timestamp: new Date(),
-      };
-
-      addChatMessage(assistantMessage);
-    }
-  };
-
-  const handleQuery = (query: string) => {
-    let response = '';
-
-    if (query.includes('últimos dias') || query.includes('semana')) {
-      const total = getTotalByPeriod(7);
-      response = `📊 Gastos dos últimos 7 dias:\n💰 Total: ${formatCurrency(total)}`;
-    } else if (query.includes('hoje') || query.includes('hoje')) {
-      const total = getTotalByPeriod(1);
-      response = `📅 Gastos de hoje:\n💰 Total: ${formatCurrency(total)}`;
-    } else {
-      const recent = getRecentTransactions(5);
-      if (recent.length > 0) {
-        response = '📝 Seus últimos gastos:\n' + 
-          recent.map(t => `• ${t.descricao}: ${formatCurrency(t.valor)}`).join('\n');
-      } else {
-        response = '📭 Você ainda não tem gastos registrados.';
-      }
-    }
-
-    const assistantMessage: Omit<ChatMessage, 'id'> = {
-      tipo: 'assistant',
-      conteudo: response,
-      timestamp: new Date(),
-    };
-
-    addChatMessage(assistantMessage);
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
+      });
     }
   };
 
   const handleImageUpload = async (file: File) => {
     console.log('📸 Imagem selecionada:', file.name);
     
-    // Adicionar mensagem do usuário com a imagem
-    const userMessage: Omit<ChatMessage, 'id'> = {
+    addMessage({
       tipo: 'user',
       conteudo: `📷 Enviou comprovante: ${file.name}`,
       timestamp: new Date(),
-    };
-    
-    addChatMessage(userMessage);
-    setIsProcessingImage(true);
+    });
+
     setIsTyping(true);
 
     try {
-      // Processar a imagem
-      const extractedData = await processReceiptImage(file);
+      const extractedData = await processImage(file);
       
-      if (extractedData.confianca > 0.3 && extractedData.valor) {
-        // Gerar sugestão de transação
+      if (extractedData && extractedData.confianca > 0.3 && extractedData.valor) {
         const suggestion = formatReceiptSuggestion(extractedData);
+        const analysisMessage = createReceiptAnalysisMessage(extractedData);
         
-        const assistantMessage: Omit<ChatMessage, 'id'> = {
+        addMessage({
           tipo: 'assistant',
-          conteudo: `📋 Comprovante analisado!\n\n🔍 **Dados extraídos:**\n${extractedData.tipo ? `📝 Tipo: ${extractedData.tipo}\n` : ''}${extractedData.valor ? `💰 Valor: ${formatCurrency(extractedData.valor)}\n` : ''}${extractedData.data ? `📅 Data: ${extractedData.data}\n` : ''}${extractedData.formaPagamento ? `💳 Forma: ${extractedData.formaPagamento}\n` : ''}${extractedData.recebedor ? `🏪 Recebedor: ${extractedData.recebedor}\n` : ''}${extractedData.banco ? `🏦 Banco: ${extractedData.banco}\n` : ''}${extractedData.codigoTransacao ? `🔢 Código: ${extractedData.codigoTransacao}\n` : ''}\n✅ **Sugestão de registro:**\n"${suggestion}"\n\n💡 Digite essa sugestão ou edite conforme necessário para registrar a transação.`,
+          conteudo: analysisMessage,
           timestamp: new Date(),
-        };
+        });
         
-        addChatMessage(assistantMessage);
-        
-        // Preencher automaticamente o campo de input com a sugestão
         setInputMessage(suggestion);
-        
       } else {
-        const assistantMessage: Omit<ChatMessage, 'id'> = {
+        addMessage({
           tipo: 'assistant',
-          conteudo: `🤔 Não consegui extrair informações suficientes do comprovante.\n\nConfiança: ${Math.round(extractedData.confianca * 100)}%\n\n💡 Tente:\n• Tirar uma foto mais nítida\n• Garantir boa iluminação\n• Ou registrar manualmente: "descrição valor forma_pagamento"`,
+          conteudo: `🤔 Não consegui extrair informações suficientes do comprovante.\n\n💡 Tente:\n• Tirar uma foto mais nítida\n• Garantir boa iluminação\n• Ou registrar manualmente: "descrição valor forma_pagamento"`,
           timestamp: new Date(),
-        };
-        
-        addChatMessage(assistantMessage);
+        });
       }
-      
     } catch (error) {
       console.error('❌ Erro ao processar imagem:', error);
-      
-      const errorMessage: Omit<ChatMessage, 'id'> = {
+      addMessage({
         tipo: 'assistant',
         conteudo: '❌ Erro ao processar o comprovante. Tente novamente ou registre manualmente.',
         timestamp: new Date(),
-      };
-      
-      addChatMessage(errorMessage);
+      });
     } finally {
-      setIsProcessingImage(false);
       setIsTyping(false);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
     }
   };
 
@@ -244,26 +153,8 @@ export function ChatInterface() {
 
         {chatMessages.map((message) => (
           <div key={message.id}>
-            <div
-              className={`flex ${message.tipo === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg shadow-sm ${
-                  message.tipo === 'user'
-                    ? 'whatsapp-green text-white'
-                    : 'bg-white text-gray-800 border'
-                }`}
-              >
-                <p className="whitespace-pre-line text-sm">{message.conteudo}</p>
-                <p className={`text-xs mt-1 ${
-                  message.tipo === 'user' ? 'text-green-100' : 'text-gray-500'
-                }`}>
-                  {formatTime(new Date(message.timestamp))}
-                </p>
-              </div>
-            </div>
+            <ChatMessage message={message} />
             
-            {/* Mostrar alerta de validação apenas para a última mensagem do assistente com transação */}
             {message.tipo === 'assistant' && message.transacao && lastValidation && (
               <PaymentValidationAlert 
                 validacao={lastValidation}
@@ -278,21 +169,7 @@ export function ChatInterface() {
         ))}
 
         {(isTyping || isProcessingImage) && (
-          <div className="flex justify-start">
-            <div className="bg-white border rounded-lg px-4 py-2 shadow-sm">
-              <div className="flex items-center space-x-2">
-                {isProcessingImage && <Loader2 className="w-4 h-4 animate-spin" />}
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                </div>
-              </div>
-              {isProcessingImage && (
-                <p className="text-xs text-gray-600 mt-1">Analisando comprovante...</p>
-              )}
-            </div>
-          </div>
+          <TypingIndicator isProcessingImage={isProcessingImage} />
         )}
 
         <div ref={messagesEndRef} />
