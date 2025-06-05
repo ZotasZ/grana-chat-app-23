@@ -28,6 +28,7 @@ export function ImageUpload({ onImageSelected, disabled }: ImageUploadProps) {
         ref={fileInputRef}
         type="file"
         accept="image/*"
+        capture="environment"
         onChange={handleFileSelect}
         style={{ display: 'none' }}
       />
@@ -35,13 +36,14 @@ export function ImageUpload({ onImageSelected, disabled }: ImageUploadProps) {
       <Button
         type="button"
         variant="outline"
-        size="icon"
+        size="lg"
         onClick={openFileDialog}
         disabled={disabled}
-        className="border-gray-300 hover:border-[var(--whatsapp-green)]"
+        className="touch-target border-gray-300 hover:border-[var(--whatsapp-green)] transition-colors"
         title="Enviar comprovante"
       >
-        <Camera className="w-4 h-4" />
+        <Camera className="w-5 h-5 mr-2" />
+        <span className="text-sm">Câmera</span>
       </Button>
     </>
   );
