@@ -10,12 +10,21 @@ export interface ExtractedReceiptData {
   banco?: string;
   codigoTransacao?: string;
   descricao?: string;
-  tipo?: 'transferencia' | 'boleto' | 'cartao' | 'pix' | 'recibo' | 'nota_fiscal' | 'rpa';
+  tipo?: 'transferencia' | 'boleto' | 'cartao' | 'pix' | 'recibo' | 'nota_fiscal' | 'rpa' | 'pagamento';
   confianca: number;
 }
 
 // Padrões para identificar diferentes tipos de comprovantes
 const RECEIPT_PATTERNS = {
+  // Comprovante de pagamento bancário (BB, Itaú, etc)
+  pagamento: {
+    keywords: ['comprovante de pagamento', 'pagamento', 'sisbb', 'sistema de informacoes', 'auto-atendimento', 'convenio', 'codigo de barras', 'autenticacao'],
+    valuePattern: /(?:valor\s+total|total)\s*:?\s*r?\$?\s*(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)/i,
+    datePattern: /(?:data\s+do\s+pagamento|data)\s*:?\s*(\d{1,2}\/\d{1,2}\/\d{4})/i,
+    authPattern: /(?:autenticacao|documento)\s*:?\s*([a-z0-9.]+)/i,
+    bankPattern: /(banco\s+do\s+brasil|bb|sisbb|itau|bradesco|santander|caixa|nubank)/i
+  },
+  
   // PIX
   pix: {
     keywords: ['pix', 'transferencia instantanea', 'chave pix', 'qr code'],
@@ -77,13 +86,39 @@ function analyzeReceiptText(text: string): ExtractedReceiptData {
   const textLower = text.toLowerCase();
   let bestMatch = { tipo: 'recibo' as const, confianca: 0 };
   
-  // Identificar tipo de comprovante
+  // Identificar tipo de comprovante com peso maior para padrões específicos
   for (const [tipo, pattern] of Object.entries(RECEIPT_PATTERNS)) {
-    const keywordMatches = pattern.keywords.filter(keyword => 
-      textLower.includes(keyword.toLowerCase())
-    ).length;
+    let score = 0;
+    let keywordMatches = 0;
     
-    const confianca = keywordMatches / pattern.keywords.length;
+    // Contar matches de palavras-chave
+    for (const keyword of pattern.keywords) {
+      if (textLower.includes(keyword.toLowerCase())) {
+        keywordMatches++;
+        // Dar peso maior para palavras-chave específicas
+        if (keyword === 'comprovante de pagamento' || keyword === 'sisbb') {
+          score += 0.3;
+        } else {
+          score += 0.1;
+        }
+      }
+    }
+    
+    // Verificar se tem padrões específicos (valor, data, etc)
+    if (pattern.valuePattern && text.match(pattern.valuePattern)) {
+      score += 0.3;
+    }
+    if (pattern.datePattern && text.match(pattern.datePattern)) {
+      score += 0.2;
+    }
+    if ('bankPattern' in pattern && pattern.bankPattern && text.match(pattern.bankPattern)) {
+      score += 0.3;
+    }
+    if ('authPattern' in pattern && pattern.authPattern && text.match(pattern.authPattern)) {
+      score += 0.2;
+    }
+    
+    const confianca = Math.min(score, 1.0); // Limitar a 1.0
     
     if (confianca > bestMatch.confianca) {
       bestMatch = { tipo: tipo as any, confianca };
@@ -99,53 +134,82 @@ function analyzeReceiptText(text: string): ExtractedReceiptData {
     confianca: bestMatch.confianca
   };
   
-  // Extrair valor
-  if (pattern?.valuePattern) {
-    const valorMatch = text.match(pattern.valuePattern);
+  // Extrair valor com padrões mais flexíveis
+  const valorPatterns = [
+    /valor\s+total\s*:?\s*(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)/i,
+    /total\s*:?\s*(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)/i,
+    /(\d{1,3}(?:\.\d{3})*,\d{2})/g // Captura qualquer valor no formato brasileiro
+  ];
+  
+  for (const valorPattern of valorPatterns) {
+    const valorMatch = text.match(valorPattern);
     if (valorMatch) {
       const valorStr = valorMatch[1].replace(/\./g, '').replace(',', '.');
       result.valor = parseFloat(valorStr);
       console.log('💰 Valor extraído:', result.valor);
+      break;
     }
   }
   
-  // Extrair data
-  if (pattern?.datePattern) {
-    const dataMatch = text.match(pattern.datePattern);
+  // Extrair data com padrões mais flexíveis
+  const dataPatterns = [
+    /data\s+do\s+pagamento\s*:?\s*(\d{1,2}\/\d{1,2}\/\d{4})/i,
+    /(\d{2}\/\d{2}\/\d{4})/g // Captura qualquer data no formato DD/MM/YYYY
+  ];
+  
+  for (const dataPattern of dataPatterns) {
+    const dataMatch = text.match(dataPattern);
     if (dataMatch) {
       result.data = dataMatch[1];
       console.log('📅 Data extraída:', result.data);
+      break;
     }
   }
   
   // Extrair banco/estabelecimento
-  if ('bankPattern' in pattern && pattern.bankPattern) {
-    const bancoMatch = text.match(pattern.bankPattern);
+  const bancoPatterns = [
+    /sisbb/i,
+    /banco\s+do\s+brasil/i,
+    /sistema\s+de\s+informacoes\s+banco\s+do\s+brasil/i,
+    /(itau|bradesco|santander|caixa|nubank)/i
+  ];
+  
+  for (const bancoPattern of bancoPatterns) {
+    const bancoMatch = text.match(bancoPattern);
     if (bancoMatch) {
-      result.banco = bancoMatch[1];
+      result.banco = bancoMatch[0].includes('sisbb') || bancoMatch[0].toLowerCase().includes('banco do brasil') 
+        ? 'Banco do Brasil' 
+        : bancoMatch[1] || bancoMatch[0];
       console.log('🏦 Banco extraído:', result.banco);
+      break;
     }
   }
   
-  if ('establishmentPattern' in pattern && pattern.establishmentPattern) {
-    const estabelecimentoMatch = text.match(pattern.establishmentPattern);
-    if (estabelecimentoMatch) {
-      result.recebedor = estabelecimentoMatch[1].trim();
-      console.log('🏪 Estabelecimento extraído:', result.recebedor);
-    }
+  // Extrair recebedor/convenio
+  const convenioMatch = text.match(/convenio\s+([^\n\r]+)/i);
+  if (convenioMatch) {
+    result.recebedor = convenioMatch[1].trim();
+    console.log('🏪 Convênio extraído:', result.recebedor);
   }
   
-  // Extrair código de transação
-  if ('codePattern' in pattern && pattern.codePattern) {
-    const codigoMatch = text.match(pattern.codePattern);
-    if (codigoMatch) {
-      result.codigoTransacao = codigoMatch[1];
+  // Extrair código de autenticação/documento
+  const authPatterns = [
+    /autenticacao\s+sisbb\s*:?\s*([a-z0-9.]+)/i,
+    /documento\s*:?\s*(\d+)/i
+  ];
+  
+  for (const authPattern of authPatterns) {
+    const authMatch = text.match(authPattern);
+    if (authMatch) {
+      result.codigoTransacao = authMatch[1];
       console.log('🔢 Código extraído:', result.codigoTransacao);
+      break;
     }
   }
   
   // Definir forma de pagamento baseada no tipo
   const paymentMethods = {
+    pagamento: 'Pagamento Bancário',
     pix: 'PIX',
     transferencia: 'Transferência',
     cartao: 'Cartão',
@@ -159,7 +223,7 @@ function analyzeReceiptText(text: string): ExtractedReceiptData {
   
   // Gerar descrição baseada nas informações extraídas
   if (result.recebedor) {
-    result.descricao = result.recebedor;
+    result.descricao = `Pagamento - ${result.recebedor}`;
   } else if (result.banco) {
     result.descricao = `Pagamento via ${result.banco}`;
   } else {
@@ -173,9 +237,19 @@ function analyzeReceiptText(text: string): ExtractedReceiptData {
 export function formatReceiptSuggestion(data: ExtractedReceiptData): string {
   const parts = [];
   
-  if (data.descricao) parts.push(data.descricao);
-  if (data.valor) parts.push(data.valor.toString());
-  if (data.formaPagamento) parts.push(data.formaPagamento.toLowerCase());
+  if (data.recebedor) {
+    parts.push(data.recebedor.toLowerCase());
+  } else if (data.descricao) {
+    parts.push(data.descricao.toLowerCase());
+  }
+  
+  if (data.valor) {
+    parts.push(data.valor.toString());
+  }
+  
+  if (data.formaPagamento) {
+    parts.push(data.formaPagamento.toLowerCase());
+  }
   
   return parts.join(' ');
 }
