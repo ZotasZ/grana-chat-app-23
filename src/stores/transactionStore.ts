@@ -167,29 +167,34 @@ export const useTransactionStore = create<TransactionStore>()(
         getItem: (name) => {
           const str = localStorage.getItem(name);
           if (!str) return null;
-          const data = JSON.parse(str);
-          // Convert selectedMonth back to Date object if it exists
-          if (data.state?.selectedMonth) {
-            data.state.selectedMonth = new Date(data.state.selectedMonth);
+          
+          try {
+            const data = JSON.parse(str);
+            // Convert selectedMonth back to Date object if it exists
+            if (data.state?.selectedMonth) {
+              data.state.selectedMonth = new Date(data.state.selectedMonth);
+            }
+            // Convert transaction dates back to Date objects
+            if (data.state?.transactions) {
+              data.state.transactions = data.state.transactions.map((t: any) => ({
+                ...t,
+                data: new Date(t.data)
+              }));
+            }
+            // Convert chat message timestamps back to Date objects
+            if (data.state?.chatMessages) {
+              data.state.chatMessages = data.state.chatMessages.map((m: any) => ({
+                ...m,
+                timestamp: new Date(m.timestamp)
+              }));
+            }
+            return data;
+          } catch {
+            return null;
           }
-          // Convert transaction dates back to Date objects
-          if (data.state?.transactions) {
-            data.state.transactions = data.state.transactions.map((t: any) => ({
-              ...t,
-              data: new Date(t.data)
-            }));
-          }
-          // Convert chat message timestamps back to Date objects
-          if (data.state?.chatMessages) {
-            data.state.chatMessages = data.state.chatMessages.map((m: any) => ({
-              ...m,
-              timestamp: new Date(m.timestamp)
-            }));
-          }
-          return str;
         },
         setItem: (name, value) => {
-          localStorage.setItem(name, value);
+          localStorage.setItem(name, JSON.stringify(value));
         },
         removeItem: (name) => {
           localStorage.removeItem(name);
