@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -41,15 +40,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     
     if (isDevelopment) {
       console.log('🔧 Modo de desenvolvimento detectado - autenticação simplificada');
-      // Em desenvolvimento, criar um usuário mock
+      // Em desenvolvimento, criar um usuário mock com todas as propriedades necessárias
       const mockUser = {
         id: 'dev-user-123',
         email: 'dev@example.com',
-        user_metadata: { name: 'Usuário Desenvolvimento' }
+        user_metadata: { name: 'Usuário Desenvolvimento' },
+        app_metadata: {},
+        aud: 'authenticated',
+        created_at: new Date().toISOString(),
+        confirmed_at: new Date().toISOString(),
+        email_confirmed_at: new Date().toISOString(),
+        phone: '',
+        last_sign_in_at: new Date().toISOString(),
+        role: 'authenticated',
+        updated_at: new Date().toISOString()
       } as User;
       
       setUser(mockUser);
-      setSession({ user: mockUser } as Session);
+      setSession({ user: mockUser, access_token: 'mock-token', refresh_token: 'mock-refresh', expires_in: 3600, token_type: 'bearer', expires_at: Date.now() + 3600000 } as Session);
       setLoading(false);
       return;
     }

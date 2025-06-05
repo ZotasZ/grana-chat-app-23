@@ -1,4 +1,3 @@
-
 import Tesseract from 'tesseract.js';
 
 export interface ExtractedReceiptData {
@@ -97,7 +96,6 @@ export async function processReceiptImage(imageFile: File): Promise<ExtractedRec
     // Realizar OCR na imagem com configurações otimizadas
     const { data: { text } } = await Tesseract.recognize(imageFile, 'por', {
       logger: m => console.log('OCR:', m),
-      tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,/:-$ ',
       psm: 6 // Assume uma única coluna de texto uniforme
     });
     
