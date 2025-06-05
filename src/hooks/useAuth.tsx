@@ -34,42 +34,79 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
+    console.log('🔧 Inicializando AuthProvider...');
+    
+    // Verificar se estamos em modo de desenvolvimento/teste
+    const isDevelopment = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
+    
+    if (isDevelopment) {
+      console.log('🔧 Modo de desenvolvimento detectado - autenticação simplificada');
+      // Em desenvolvimento, criar um usuário mock
+      const mockUser = {
+        id: 'dev-user-123',
+        email: 'dev@example.com',
+        user_metadata: { name: 'Usuário Desenvolvimento' }
+      } as User;
+      
+      setUser(mockUser);
+      setSession({ user: mockUser } as Session);
+      setLoading(false);
+      return;
+    }
 
-        // Log authentication events
-        if (session?.user && event === 'SIGNED_IN') {
-          setTimeout(() => {
-            logActivity('user_login', 'auth', {
+    // Configurar listener de mudanças de estado de autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('🔐 Auth state changed:', event, session?.user?.email);
+        
+        try {
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          // Log de atividade para eventos de autenticação
+          if (session?.user && event === 'SIGNED_IN') {
+            await logActivity('user_login', 'auth', {
               provider: 'google',
               timestamp: new Date().toISOString()
             });
-          }, 0);
-        }
+          }
 
-        if (event === 'SIGNED_OUT') {
-          setTimeout(() => {
-            logActivity('user_logout', 'auth', {
+          if (event === 'SIGNED_OUT') {
+            await logActivity('user_logout', 'auth', {
               timestamp: new Date().toISOString()
             });
-          }, 0);
+          }
+        } catch (error) {
+          console.error('❌ Erro ao processar mudança de estado de auth:', error);
+        } finally {
+          setLoading(false);
         }
       }
     );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    // Verificar sessão existente
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('❌ Erro ao obter sessão:', error);
+        }
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+      } catch (error) {
+        console.error('❌ Erro na inicialização da auth:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    return () => subscription.unsubscribe();
+    initializeAuth();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signInWithGoogle = async () => {
@@ -89,7 +126,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       });
 
       if (error) {
-        console.error('Google sign-in error:', error);
+        console.error('❌ Google sign-in error:', error);
         toast({
           title: "Erro na autenticação",
           description: "Não foi possível fazer login com Google. Tente novamente.",
@@ -97,7 +134,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         });
       }
     } catch (error) {
-      console.error('Sign-in error:', error);
+      console.error('❌ Sign-in error:', error);
       toast({
         title: "Erro na autenticação",
         description: "Erro inesperado durante o login.",
@@ -112,7 +149,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       setLoading(true);
       
-      // Log logout before signing out
+      // Log logout antes de sair
       if (user) {
         await logActivity('user_logout_attempt', 'auth', {
           timestamp: new Date().toISOString()
@@ -122,7 +159,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const { error } = await supabase.auth.signOut();
       
       if (error) {
-        console.error('Sign-out error:', error);
+        console.error('❌ Sign-out error:', error);
         toast({
           title: "Erro ao sair",
           description: "Não foi possível fazer logout. Tente novamente.",
@@ -135,7 +172,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         });
       }
     } catch (error) {
-      console.error('Sign-out error:', error);
+      console.error('❌ Sign-out error:', error);
       toast({
         title: "Erro ao sair",
         description: "Erro inesperado durante o logout.",
@@ -147,6 +184,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const logActivity = async (action: string, resource?: string, details?: any) => {
+    // Em desenvolvimento, apenas logar no console
+    const isDevelopment = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
+    
+    if (isDevelopment) {
+      console.log('📝 Activity logged:', { action, resource, details });
+      return;
+    }
+
     if (!user) return;
 
     try {
@@ -155,15 +200,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         p_action: action,
         p_resource: resource || null,
         p_details: details ? JSON.stringify(details) : null,
-        p_ip_address: null, // Could be enhanced with IP detection
+        p_ip_address: null,
         p_user_agent: navigator.userAgent
       });
 
       if (error) {
-        console.error('Error logging activity:', error);
+        console.error('❌ Error logging activity:', error);
       }
     } catch (error) {
-      console.error('Activity logging error:', error);
+      console.error('❌ Activity logging error:', error);
     }
   };
 
