@@ -13,6 +13,10 @@ export interface Transaction {
   totalParcelas?: number;
   valorOriginal?: number;
   grupoParcelaId?: string;
+  // Novos campos para comprovantes
+  comprovanteUrl?: string;
+  codigoTransacao?: string;
+  banco?: string;
 }
 
 export interface Category {
@@ -35,4 +39,5 @@ export interface ChatMessage {
   conteudo: string;
   timestamp: Date;
   transacao?: Transaction;
+  imagemUrl?: string;
 }

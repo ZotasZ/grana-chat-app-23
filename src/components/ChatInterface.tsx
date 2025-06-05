@@ -1,16 +1,18 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, MessageCircle, AlertTriangle } from 'lucide-react';
+import { Send, MessageCircle, AlertTriangle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useTransactionStore } from '../stores/transactionStore';
 import { parseTransactionMessage, formatCurrency, formatTime } from '../utils/transactionParser';
+import { processReceiptImage, formatReceiptSuggestion, ExtractedReceiptData } from '../utils/receiptProcessor';
 import { ChatMessage } from '../types/Transaction';
 import { PaymentValidationAlert } from './PaymentValidationAlert';
+import { ImageUpload } from './ImageUpload';
 
 export function ChatInterface() {
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
   const [lastValidation, setLastValidation] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { addTransaction, addParceladoTransaction, addChatMessage, chatMessages, getRecentTransactions, getTotalByPeriod } = useTransactionStore();
@@ -150,6 +152,65 @@ export function ChatInterface() {
     }
   };
 
+  const handleImageUpload = async (file: File) => {
+    console.log('📸 Imagem selecionada:', file.name);
+    
+    // Adicionar mensagem do usuário com a imagem
+    const userMessage: Omit<ChatMessage, 'id'> = {
+      tipo: 'user',
+      conteudo: `📷 Enviou comprovante: ${file.name}`,
+      timestamp: new Date(),
+    };
+    
+    addChatMessage(userMessage);
+    setIsProcessingImage(true);
+    setIsTyping(true);
+
+    try {
+      // Processar a imagem
+      const extractedData = await processReceiptImage(file);
+      
+      if (extractedData.confianca > 0.3 && extractedData.valor) {
+        // Gerar sugestão de transação
+        const suggestion = formatReceiptSuggestion(extractedData);
+        
+        const assistantMessage: Omit<ChatMessage, 'id'> = {
+          tipo: 'assistant',
+          conteudo: `📋 Comprovante analisado!\n\n🔍 **Dados extraídos:**\n${extractedData.tipo ? `📝 Tipo: ${extractedData.tipo}\n` : ''}${extractedData.valor ? `💰 Valor: ${formatCurrency(extractedData.valor)}\n` : ''}${extractedData.data ? `📅 Data: ${extractedData.data}\n` : ''}${extractedData.formaPagamento ? `💳 Forma: ${extractedData.formaPagamento}\n` : ''}${extractedData.recebedor ? `🏪 Recebedor: ${extractedData.recebedor}\n` : ''}${extractedData.banco ? `🏦 Banco: ${extractedData.banco}\n` : ''}${extractedData.codigoTransacao ? `🔢 Código: ${extractedData.codigoTransacao}\n` : ''}\n✅ **Sugestão de registro:**\n"${suggestion}"\n\n💡 Digite essa sugestão ou edite conforme necessário para registrar a transação.`,
+          timestamp: new Date(),
+        };
+        
+        addChatMessage(assistantMessage);
+        
+        // Preencher automaticamente o campo de input com a sugestão
+        setInputMessage(suggestion);
+        
+      } else {
+        const assistantMessage: Omit<ChatMessage, 'id'> = {
+          tipo: 'assistant',
+          conteudo: `🤔 Não consegui extrair informações suficientes do comprovante.\n\nConfiança: ${Math.round(extractedData.confianca * 100)}%\n\n💡 Tente:\n• Tirar uma foto mais nítida\n• Garantir boa iluminação\n• Ou registrar manualmente: "descrição valor forma_pagamento"`,
+          timestamp: new Date(),
+        };
+        
+        addChatMessage(assistantMessage);
+      }
+      
+    } catch (error) {
+      console.error('❌ Erro ao processar imagem:', error);
+      
+      const errorMessage: Omit<ChatMessage, 'id'> = {
+        tipo: 'assistant',
+        conteudo: '❌ Erro ao processar o comprovante. Tente novamente ou registre manualmente.',
+        timestamp: new Date(),
+      };
+      
+      addChatMessage(errorMessage);
+    } finally {
+      setIsProcessingImage(false);
+      setIsTyping(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-gray-50">
       {/* Header */}
@@ -176,7 +237,7 @@ export function ChatInterface() {
               <p>• "ifood 44,00 crédito"</p>
               <p>• "uber 15 pix"</p>
               <p>• "tênis 200 cartão crédito 2x"</p>
-              <p>• "mercado 120 cartão débito"</p>
+              <p>• 📷 Ou envie foto do comprovante!</p>
             </div>
           </div>
         )}
@@ -216,14 +277,20 @@ export function ChatInterface() {
           </div>
         ))}
 
-        {isTyping && (
+        {(isTyping || isProcessingImage) && (
           <div className="flex justify-start">
             <div className="bg-white border rounded-lg px-4 py-2 shadow-sm">
-              <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              <div className="flex items-center space-x-2">
+                {isProcessingImage && <Loader2 className="w-4 h-4 animate-spin" />}
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                </div>
               </div>
+              {isProcessingImage && (
+                <p className="text-xs text-gray-600 mt-1">Analisando comprovante...</p>
+              )}
             </div>
           </div>
         )}
@@ -234,16 +301,21 @@ export function ChatInterface() {
       {/* Input Area */}
       <div className="p-4 bg-white border-t">
         <div className="flex gap-2">
+          <ImageUpload 
+            onImageSelected={handleImageUpload}
+            disabled={isProcessingImage || isTyping}
+          />
           <Input
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Digite seu gasto..."
+            placeholder="Digite seu gasto ou envie comprovante..."
             className="flex-1 border-gray-300 focus:border-[var(--whatsapp-green)]"
+            disabled={isProcessingImage}
           />
           <Button
             onClick={handleSendMessage}
-            disabled={!inputMessage.trim()}
+            disabled={!inputMessage.trim() || isProcessingImage}
             className="whatsapp-green hover:bg-green-600 text-white px-6"
           >
             <Send className="w-4 h-4" />
