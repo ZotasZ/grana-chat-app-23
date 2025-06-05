@@ -2,8 +2,8 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.granaapp.chat',
-  appName: 'Grana Chat',
+  appId: 'com.fincontrol.app',
+  appName: 'FinControl',
   webDir: 'dist',
   bundledWebRuntime: false,
   server: {

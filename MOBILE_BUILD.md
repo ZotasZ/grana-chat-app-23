@@ -1,5 +1,5 @@
 
-# Guia para Gerar APK - Grana Chat App
+# Guia para Gerar APK - FinControl App
 
 ## Pré-requisitos
 
@@ -53,8 +53,8 @@ npx cap open android
 
 ## Configurações Importantes
 
-- O app será instalado com o ID: `com.granaapp.chat`
-- Nome do app: "Grana Chat"
+- O app será instalado com o ID: `com.fincontrol.app`
+- Nome do app: "FinControl"
 - Tema verde para splash screen e status bar
 
 ## Troubleshooting
