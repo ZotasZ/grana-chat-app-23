@@ -10,6 +10,14 @@ interface ProtectedRouteProps {
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
 
+  // Temporariamente desabilitado para testes
+  const isTestMode = true; // Mude para false quando quiser reativar a autenticação
+  
+  if (isTestMode) {
+    console.log('Modo de teste: autenticação temporariamente desabilitada');
+    return <>{children}</>;
+  }
+
   // Durante desenvolvimento, permite acesso sem login
   const isDevelopment = import.meta.env.DEV;
   
