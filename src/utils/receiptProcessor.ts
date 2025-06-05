@@ -95,8 +95,7 @@ export async function processReceiptImage(imageFile: File): Promise<ExtractedRec
     
     // Realizar OCR na imagem com configurações otimizadas
     const { data: { text } } = await Tesseract.recognize(imageFile, 'por', {
-      logger: m => console.log('OCR:', m),
-      psm: 6 // Assume uma única coluna de texto uniforme
+      logger: m => console.log('OCR:', m)
     });
     
     console.log('📝 Texto extraído:', text);
