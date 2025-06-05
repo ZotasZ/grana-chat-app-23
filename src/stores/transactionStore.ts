@@ -42,8 +42,8 @@ export const useTransactionStore = create<TransactionStore>()(
         
         for (let i = 0; i < totalParcelas; i++) {
           const dataTransacao = new Date();
-          // Primeira parcela no mês atual, próximas nos meses seguintes
-          dataTransacao.setMonth(dataTransacao.getMonth() + i);
+          // Primeira parcela no próximo mês, próximas nos meses seguintes
+          dataTransacao.setMonth(dataTransacao.getMonth() + i + 1);
           
           const transaction: Transaction = {
             ...baseTransaction,
@@ -80,10 +80,12 @@ export const useTransactionStore = create<TransactionStore>()(
         let filteredTransactions = transactions;
         
         if (month) {
+          // Ensure month is a Date object
+          const monthDate = month instanceof Date ? month : new Date(month);
           filteredTransactions = transactions.filter(t => {
             const tDate = new Date(t.data);
-            return tDate.getMonth() === month.getMonth() && 
-                   tDate.getFullYear() === month.getFullYear();
+            return tDate.getMonth() === monthDate.getMonth() && 
+                   tDate.getFullYear() === monthDate.getFullYear();
           });
         }
         
@@ -119,15 +121,19 @@ export const useTransactionStore = create<TransactionStore>()(
 
       getTransactionsByMonth: (month: Date) => {
         const { transactions } = get();
+        // Ensure month is a Date object
+        const monthDate = month instanceof Date ? month : new Date(month);
         return transactions.filter(t => {
           const tDate = new Date(t.data);
-          return tDate.getMonth() === month.getMonth() && 
-                 tDate.getFullYear() === month.getFullYear();
+          return tDate.getMonth() === monthDate.getMonth() && 
+                 tDate.getFullYear() === monthDate.getFullYear();
         });
       },
 
       setSelectedMonth: (month: Date) => {
-        set({ selectedMonth: month });
+        // Ensure we're always storing a Date object
+        const dateObject = month instanceof Date ? month : new Date(month);
+        set({ selectedMonth: dateObject });
       },
 
       getNextMonthsWithTransactions: () => {
@@ -156,6 +162,39 @@ export const useTransactionStore = create<TransactionStore>()(
     }),
     {
       name: 'transaction-store',
+      // Custom storage to handle Date serialization/deserialization
+      storage: {
+        getItem: (name) => {
+          const str = localStorage.getItem(name);
+          if (!str) return null;
+          const data = JSON.parse(str);
+          // Convert selectedMonth back to Date object if it exists
+          if (data.state?.selectedMonth) {
+            data.state.selectedMonth = new Date(data.state.selectedMonth);
+          }
+          // Convert transaction dates back to Date objects
+          if (data.state?.transactions) {
+            data.state.transactions = data.state.transactions.map((t: any) => ({
+              ...t,
+              data: new Date(t.data)
+            }));
+          }
+          // Convert chat message timestamps back to Date objects
+          if (data.state?.chatMessages) {
+            data.state.chatMessages = data.state.chatMessages.map((m: any) => ({
+              ...m,
+              timestamp: new Date(m.timestamp)
+            }));
+          }
+          return str;
+        },
+        setItem: (name, value) => {
+          localStorage.setItem(name, value);
+        },
+        removeItem: (name) => {
+          localStorage.removeItem(name);
+        },
+      },
     }
   )
 );
