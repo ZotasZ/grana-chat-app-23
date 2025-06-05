@@ -1,6 +1,6 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { 
   PieChart, 
   Pie, 
@@ -18,31 +18,59 @@ import {
   TrendingDown, 
   CreditCard, 
   Calendar,
-  ShoppingBag
+  ShoppingBag,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { useTransactionStore } from '../stores/transactionStore';
 import { formatCurrency } from '../utils/transactionParser';
 
 export function Dashboard() {
-  const { transactions, getTransactionsByCategory, getTotalByPeriod } = useTransactionStore();
+  const { 
+    transactions, 
+    selectedMonth,
+    setSelectedMonth,
+    getTransactionsByCategory, 
+    getTotalByPeriod,
+    getTransactionsByMonth,
+    getNextMonthsWithTransactions
+  } = useTransactionStore();
 
-  const totalMes = getTotalByPeriod(30);
-  const totalSemana = getTotalByPeriod(7);
+  const currentMonth = selectedMonth;
+  const availableMonths = getNextMonthsWithTransactions();
+  const currentMonthTransactions = getTransactionsByMonth(currentMonth);
+
+  // Dados do mês selecionado
+  const totalMes = currentMonthTransactions.reduce((sum, t) => sum + t.valor, 0);
+  const totalSemana = getTotalByPeriod(7, new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0));
   const totalHoje = getTotalByPeriod(1);
-  const totalTransacoes = transactions.length;
+  const totalTransacoes = currentMonthTransactions.length;
 
-  // Dados por categoria para gráfico de pizza
-  const categoriaData = Object.entries(getTransactionsByCategory()).map(([categoria, trans]) => ({
+  // Navegação entre meses
+  const goToPreviousMonth = () => {
+    const newMonth = new Date(currentMonth);
+    newMonth.setMonth(newMonth.getMonth() - 1);
+    setSelectedMonth(newMonth);
+  };
+
+  const goToNextMonth = () => {
+    const newMonth = new Date(currentMonth);
+    newMonth.setMonth(newMonth.getMonth() + 1);
+    setSelectedMonth(newMonth);
+  };
+
+  // Dados por categoria para gráfico de pizza (mês atual)
+  const categoriaData = Object.entries(getTransactionsByCategory(currentMonth)).map(([categoria, trans]) => ({
     name: categoria,
     value: trans.reduce((sum, t) => sum + t.valor, 0),
     count: trans.length
   }));
 
-  // Dados dos últimos 7 dias para gráfico de barras
+  // Dados dos últimos 7 dias do mês selecionado para gráfico de barras
   const last7Days = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date();
+    const date = new Date(currentMonth);
     date.setDate(date.getDate() - i);
-    const dayTransactions = transactions.filter(t => {
+    const dayTransactions = currentMonthTransactions.filter(t => {
       const tDate = new Date(t.data);
       return tDate.toDateString() === date.toDateString();
     });
@@ -55,13 +83,62 @@ export function Dashboard() {
 
   const COLORS = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#F7DC6F', '#BB8FCE', '#82E0AA', '#95A5A6'];
 
-  // Transações recentes
-  const recentTransactions = transactions
+  // Transações recentes do mês
+  const recentTransactions = currentMonthTransactions
     .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
     .slice(0, 8);
 
+  // Função para formatar o nome do mês
+  const formatMonthYear = (date: Date) => {
+    return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  };
+
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+      {/* Header com navegação de mês */}
+      <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm">
+        <Button variant="outline" size="icon" onClick={goToPreviousMonth}>
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 capitalize">
+            {formatMonthYear(currentMonth)}
+          </h2>
+          <p className="text-sm text-gray-600">
+            {currentMonthTransactions.filter(t => t.parcelado).length > 0 && 
+              `${currentMonthTransactions.filter(t => t.parcelado).length} parcela(s) programada(s)`
+            }
+          </p>
+        </div>
+        
+        <Button variant="outline" size="icon" onClick={goToNextMonth}>
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Meses disponíveis */}
+      {availableMonths.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          {availableMonths.map((month) => (
+            <Button
+              key={month.toISOString()}
+              variant={
+                month.getMonth() === currentMonth.getMonth() && 
+                month.getFullYear() === currentMonth.getFullYear() 
+                  ? "default" 
+                  : "outline"
+              }
+              size="sm"
+              onClick={() => setSelectedMonth(month)}
+              className="whitespace-nowrap"
+            >
+              {month.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })}
+            </Button>
+          ))}
+        </div>
+      )}
+
       {/* Cards de Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-l-4 border-l-red-500">
@@ -71,7 +148,9 @@ export function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">{formatCurrency(totalMes)}</div>
-            <p className="text-xs text-muted-foreground">Últimos 30 dias</p>
+            <p className="text-xs text-muted-foreground">
+              {formatMonthYear(currentMonth)}
+            </p>
           </CardContent>
         </Card>
 
@@ -104,7 +183,7 @@ export function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{totalTransacoes}</div>
-            <p className="text-xs text-muted-foreground">Total registrado</p>
+            <p className="text-xs text-muted-foreground">Neste mês</p>
           </CardContent>
         </Card>
       </div>
@@ -173,7 +252,7 @@ export function Dashboard() {
       {/* Lista de Transações Recentes */}
       <Card>
         <CardHeader>
-          <CardTitle>Transações Recentes</CardTitle>
+          <CardTitle>Transações do Mês</CardTitle>
         </CardHeader>
         <CardContent>
           {recentTransactions.length > 0 ? (
@@ -187,13 +266,15 @@ export function Dashboard() {
                       {transaction.categoria === 'Saúde' && '💊'}
                       {transaction.categoria === 'Lazer' && '🎬'}
                       {transaction.categoria === 'Casa' && '🏠'}
-                      {!['Alimentação', 'Transporte', 'Saúde', 'Lazer', 'Casa'].includes(transaction.categoria) && '💸'}
+                      {transaction.categoria === 'Presentes' && '🎁'}
+                      {!['Alimentação', 'Transporte', 'Saúde', 'Lazer', 'Casa', 'Presentes'].includes(transaction.categoria) && '💸'}
                     </div>
                     <div>
                       <p className="font-medium text-gray-900">{transaction.descricao}</p>
                       <p className="text-sm text-gray-500">
                         {transaction.categoria}
                         {transaction.formaPagamento && ` • ${transaction.formaPagamento}`}
+                        {transaction.parcelado && ` • ${transaction.parcelaAtual}/${transaction.totalParcelas}`}
                       </p>
                     </div>
                   </div>

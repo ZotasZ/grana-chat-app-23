@@ -6,12 +6,16 @@ import { Transaction, ChatMessage } from '../types/Transaction';
 interface TransactionStore {
   transactions: Transaction[];
   chatMessages: ChatMessage[];
+  selectedMonth: Date;
   addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
   addParceladoTransaction: (transaction: Omit<Transaction, 'id'>, totalParcelas: number) => void;
   addChatMessage: (message: Omit<ChatMessage, 'id'>) => void;
-  getTransactionsByCategory: () => Record<string, Transaction[]>;
+  getTransactionsByCategory: (month?: Date) => Record<string, Transaction[]>;
   getRecentTransactions: (limit?: number) => Transaction[];
-  getTotalByPeriod: (days: number) => number;
+  getTotalByPeriod: (days: number, fromDate?: Date) => number;
+  getTransactionsByMonth: (month: Date) => Transaction[];
+  setSelectedMonth: (month: Date) => void;
+  getNextMonthsWithTransactions: () => Date[];
 }
 
 export const useTransactionStore = create<TransactionStore>()(
@@ -19,6 +23,7 @@ export const useTransactionStore = create<TransactionStore>()(
     (set, get) => ({
       transactions: [],
       chatMessages: [],
+      selectedMonth: new Date(),
       
       addTransaction: (transaction) => {
         const newTransaction: Transaction = {
@@ -37,6 +42,7 @@ export const useTransactionStore = create<TransactionStore>()(
         
         for (let i = 0; i < totalParcelas; i++) {
           const dataTransacao = new Date();
+          // Primeira parcela no mês atual, próximas nos meses seguintes
           dataTransacao.setMonth(dataTransacao.getMonth() + i);
           
           const transaction: Transaction = {
@@ -69,9 +75,19 @@ export const useTransactionStore = create<TransactionStore>()(
         }));
       },
       
-      getTransactionsByCategory: () => {
+      getTransactionsByCategory: (month?: Date) => {
         const { transactions } = get();
-        return transactions.reduce((acc, transaction) => {
+        let filteredTransactions = transactions;
+        
+        if (month) {
+          filteredTransactions = transactions.filter(t => {
+            const tDate = new Date(t.data);
+            return tDate.getMonth() === month.getMonth() && 
+                   tDate.getFullYear() === month.getFullYear();
+          });
+        }
+        
+        return filteredTransactions.reduce((acc, transaction) => {
           const category = transaction.categoria;
           if (!acc[category]) {
             acc[category] = [];
@@ -88,14 +104,54 @@ export const useTransactionStore = create<TransactionStore>()(
           .slice(0, limit);
       },
       
-      getTotalByPeriod: (days) => {
+      getTotalByPeriod: (days, fromDate = new Date()) => {
         const { transactions } = get();
-        const cutoffDate = new Date();
+        const cutoffDate = new Date(fromDate);
         cutoffDate.setDate(cutoffDate.getDate() - days);
         
         return transactions
-          .filter((t) => new Date(t.data) >= cutoffDate && t.tipo === 'gasto')
+          .filter((t) => {
+            const tDate = new Date(t.data);
+            return tDate >= cutoffDate && tDate <= fromDate && t.tipo === 'gasto';
+          })
           .reduce((sum, t) => sum + t.valor, 0);
+      },
+
+      getTransactionsByMonth: (month: Date) => {
+        const { transactions } = get();
+        return transactions.filter(t => {
+          const tDate = new Date(t.data);
+          return tDate.getMonth() === month.getMonth() && 
+                 tDate.getFullYear() === month.getFullYear();
+        });
+      },
+
+      setSelectedMonth: (month: Date) => {
+        set({ selectedMonth: month });
+      },
+
+      getNextMonthsWithTransactions: () => {
+        const { transactions } = get();
+        const months = new Set<string>();
+        const currentDate = new Date();
+        
+        transactions.forEach(t => {
+          const tDate = new Date(t.data);
+          // Incluir mês atual e próximos 12 meses que tenham transações
+          if (tDate >= currentDate || 
+              (tDate.getMonth() === currentDate.getMonth() && 
+               tDate.getFullYear() === currentDate.getFullYear())) {
+            const monthKey = `${tDate.getFullYear()}-${tDate.getMonth()}`;
+            months.add(monthKey);
+          }
+        });
+
+        return Array.from(months)
+          .map(key => {
+            const [year, month] = key.split('-');
+            return new Date(parseInt(year), parseInt(month), 1);
+          })
+          .sort((a, b) => a.getTime() - b.getTime());
       },
     }),
     {
