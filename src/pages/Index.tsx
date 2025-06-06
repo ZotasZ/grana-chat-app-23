@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dashboard } from "@/components/Dashboard";
 import { ChatInterface } from "@/components/ChatInterface";
 import { Settings } from "@/components/Settings";
+import { RecurringBills } from "@/components/RecurringBills";
 import UserProfile from "@/components/UserProfile";
 
 const Index = () => {
@@ -11,28 +12,34 @@ const Index = () => {
       <Tabs defaultValue="dashboard" className="w-full flex flex-col h-screen">
         {/* Header fixo com as abas - otimizado para mobile */}
         <div className="bg-white border-b border-gray-200 px-2 py-2 shadow-sm sticky top-0 z-50">
-          <TabsList className="grid w-full grid-cols-4 h-12 bg-gray-100 rounded-lg p-1">
+          <TabsList className="grid w-full grid-cols-5 h-12 bg-gray-100 rounded-lg p-1">
             <TabsTrigger 
               value="dashboard" 
-              className="text-xs font-medium px-2 py-2 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
+              className="text-xs font-medium px-1 py-2 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
             >
               Dashboard
             </TabsTrigger>
             <TabsTrigger 
               value="chat" 
-              className="text-xs font-medium px-2 py-2 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
+              className="text-xs font-medium px-1 py-2 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
             >
               Chat IA
             </TabsTrigger>
             <TabsTrigger 
+              value="bills" 
+              className="text-xs font-medium px-1 py-2 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
+            >
+              Contas
+            </TabsTrigger>
+            <TabsTrigger 
               value="profile" 
-              className="text-xs font-medium px-2 py-2 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
+              className="text-xs font-medium px-1 py-2 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
             >
               Perfil
             </TabsTrigger>
             <TabsTrigger 
               value="settings" 
-              className="text-xs font-medium px-2 py-2 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
+              className="text-xs font-medium px-1 py-2 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
             >
               Config
             </TabsTrigger>
@@ -47,6 +54,10 @@ const Index = () => {
           
           <TabsContent value="chat" className="h-full m-0">
             <ChatInterface />
+          </TabsContent>
+          
+          <TabsContent value="bills" className="h-full m-0 overflow-y-auto">
+            <RecurringBills />
           </TabsContent>
           
           <TabsContent value="profile" className="h-full m-0 p-3">
