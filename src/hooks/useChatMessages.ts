@@ -1,5 +1,5 @@
 
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTransactionStore } from '@/stores/transactionStore';
 import { ChatMessage } from '@/types/Transaction';
 import { parseTransactionMessage, formatCurrency } from '@/utils/transactionParser';
@@ -23,6 +23,23 @@ export function useChatMessages(): UseChatMessagesReturn {
     addChatMessage(message);
   }, [addChatMessage]);
 
+  const createConfirmationMessage = useCallback((parsedTransaction: any, isParcelado: boolean) => {
+    let confirmationMessage: string;
+
+    if (isParcelado) {
+      const valorTotal = parsedTransaction.valor * parsedTransaction.totalParcelas;
+      confirmationMessage = `✅ Compra parcelada registrada!\n${parsedTransaction.icone} ${parsedTransaction.categoria}: ${formatCurrency(valorTotal)}\n💳 ${parsedTransaction.totalParcelas}x de ${formatCurrency(parsedTransaction.valor)}\n${parsedTransaction.formaPagamento ? `💳 Forma de pagamento: ${parsedTransaction.formaPagamento}\n` : ''}📅 Primeira parcela: ${new Date().toLocaleDateString('pt-BR')}`;
+    } else {
+      confirmationMessage = `✅ Gasto registrado!\n${parsedTransaction.icone} ${parsedTransaction.categoria}: ${formatCurrency(parsedTransaction.valor)}\n${parsedTransaction.formaPagamento ? `💳 Forma de pagamento: ${parsedTransaction.formaPagamento}\n` : ''}📅 ${new Date().toLocaleDateString('pt-BR')}`;
+    }
+
+    if (parsedTransaction.validacao?.conflitos.length > 0) {
+      confirmationMessage += `\n\n⚠️ Atenção: ${parsedTransaction.validacao.conflitos.join(', ')}`;
+    }
+
+    return confirmationMessage;
+  }, []);
+
   const processTransactionMessage = useCallback((message: string): boolean => {
     const parsedTransaction = parseTransactionMessage(message);
     
@@ -37,21 +54,15 @@ export function useChatMessages(): UseChatMessagesReturn {
       formaPagamento: parsedTransaction.formaPagamento,
     };
 
-    let confirmationMessage: string;
+    const isParcelado = parsedTransaction.totalParcelas && parsedTransaction.totalParcelas > 1;
 
-    if (parsedTransaction.totalParcelas && parsedTransaction.totalParcelas > 1) {
-      addParceladoTransaction(transaction, parsedTransaction.totalParcelas);
-      
-      const valorTotal = parsedTransaction.valor * parsedTransaction.totalParcelas;
-      confirmationMessage = `✅ Compra parcelada registrada!\n${parsedTransaction.icone} ${parsedTransaction.categoria}: ${formatCurrency(valorTotal)}\n💳 ${parsedTransaction.totalParcelas}x de ${formatCurrency(parsedTransaction.valor)}\n${parsedTransaction.formaPagamento ? `💳 Forma de pagamento: ${parsedTransaction.formaPagamento}\n` : ''}📅 Primeira parcela: ${new Date().toLocaleDateString('pt-BR')}`;
+    if (isParcelado) {
+      addParceladoTransaction(transaction, parsedTransaction.totalParcelas!);
     } else {
       addTransaction(transaction);
-      confirmationMessage = `✅ Gasto registrado!\n${parsedTransaction.icone} ${parsedTransaction.categoria}: ${formatCurrency(parsedTransaction.valor)}\n${parsedTransaction.formaPagamento ? `💳 Forma de pagamento: ${parsedTransaction.formaPagamento}\n` : ''}📅 ${new Date().toLocaleDateString('pt-BR')}`;
     }
 
-    if (parsedTransaction.validacao?.conflitos.length > 0) {
-      confirmationMessage += `\n\n⚠️ Atenção: ${parsedTransaction.validacao.conflitos.join(', ')}`;
-    }
+    const confirmationMessage = createConfirmationMessage(parsedTransaction, isParcelado);
 
     addMessage({
       tipo: 'assistant',
@@ -60,7 +71,15 @@ export function useChatMessages(): UseChatMessagesReturn {
     });
 
     return true;
-  }, [addTransaction, addParceladoTransaction, addMessage]);
+  }, [addTransaction, addParceladoTransaction, addMessage, createConfirmationMessage]);
+
+  const queryResponses = useMemo(() => ({
+    week: (total: number) => `📊 Gastos dos últimos 7 dias:\n💰 Total: ${formatCurrency(total)}`,
+    today: (total: number) => `📅 Gastos de hoje:\n💰 Total: ${formatCurrency(total)}`,
+    recent: (transactions: any[]) => transactions.length > 0 
+      ? '📝 Seus últimos gastos:\n' + transactions.map(t => `• ${t.descricao}: ${formatCurrency(t.valor)}`).join('\n')
+      : '📭 Você ainda não tem gastos registrados.'
+  }), []);
 
   const processQueryMessage = useCallback((query: string) => {
     const lowerQuery = query.toLowerCase();
@@ -68,18 +87,13 @@ export function useChatMessages(): UseChatMessagesReturn {
 
     if (lowerQuery.includes('últimos dias') || lowerQuery.includes('semana')) {
       const total = getTotalByPeriod(7);
-      response = `📊 Gastos dos últimos 7 dias:\n💰 Total: ${formatCurrency(total)}`;
+      response = queryResponses.week(total);
     } else if (lowerQuery.includes('hoje')) {
       const total = getTotalByPeriod(1);
-      response = `📅 Gastos de hoje:\n💰 Total: ${formatCurrency(total)}`;
+      response = queryResponses.today(total);
     } else {
       const recent = getRecentTransactions(5);
-      if (recent.length > 0) {
-        response = '📝 Seus últimos gastos:\n' + 
-          recent.map(t => `• ${t.descricao}: ${formatCurrency(t.valor)}`).join('\n');
-      } else {
-        response = '📭 Você ainda não tem gastos registrados.';
-      }
+      response = queryResponses.recent(recent);
     }
 
     addMessage({
@@ -87,7 +101,7 @@ export function useChatMessages(): UseChatMessagesReturn {
       conteudo: response,
       timestamp: new Date(),
     });
-  }, [getTotalByPeriod, getRecentTransactions, addMessage]);
+  }, [getTotalByPeriod, getRecentTransactions, addMessage, queryResponses]);
 
   return {
     addMessage,
