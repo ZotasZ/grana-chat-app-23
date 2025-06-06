@@ -1,18 +1,14 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Shield, LogOut, Activity, User } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Shield, LogOut, Activity, User, Settings } from 'lucide-react';
 
 const UserProfile = () => {
   const { user, signOut, logActivity } = useAuth();
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
 
-  // Simulação rápida de dados para desenvolvimento
   const mockProfile = {
     id: user?.id || 'dev-user-123',
     email: user?.email || 'dev@example.com',
@@ -26,29 +22,29 @@ const UserProfile = () => {
       id: '1',
       action: 'profile_view',
       resource: 'user_profile',
-      details: {},
       created_at: new Date().toISOString()
     },
     {
       id: '2',
-      action: 'login',
-      resource: 'auth',
-      details: {},
+      action: 'app_access',
+      resource: 'dashboard',
       created_at: new Date(Date.now() - 86400000).toISOString()
+    },
+    {
+      id: '3',
+      action: 'transaction_add',
+      resource: 'transactions',
+      created_at: new Date(Date.now() - 172800000).toISOString()
     }
   ];
 
-  useEffect(() => {
-    if (user) {
-      logActivity('profile_view', 'user_profile');
-    }
-  }, [user, logActivity]);
+  React.useEffect(() => {
+    logActivity('profile_view', 'user_profile');
+  }, [logActivity]);
 
   const handleSignOut = async () => {
-    setLoading(true);
     await logActivity('profile_logout', 'user_profile');
     await signOut();
-    setLoading(false);
   };
 
   return (
@@ -72,24 +68,24 @@ const UserProfile = () => {
               <h3 className="text-base font-semibold truncate">{mockProfile.full_name}</h3>
               <p className="text-sm text-muted-foreground truncate">{mockProfile.email}</p>
               <p className="text-xs text-muted-foreground">
-                Membro desde: {new Date(mockProfile.created_at).toLocaleDateString('pt-BR')}
+                Modo: Desenvolvimento
               </p>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2 text-sm text-green-600">
-            <Shield className="w-4 h-4" />
-            <span>Conta verificada e protegida</span>
+          <div className="flex items-center space-x-2 text-sm text-blue-600">
+            <Settings className="w-4 h-4" />
+            <span>Configuração de desenvolvimento ativa</span>
           </div>
 
           <Button 
             onClick={handleSignOut} 
             variant="outline" 
             className="w-full" 
-            disabled={loading}
+            disabled
           >
             <LogOut className="w-4 h-4 mr-2" />
-            {loading ? 'Saindo...' : 'Sair com Segurança'}
+            Logout (Desabilitado)
           </Button>
         </CardContent>
       </Card>
@@ -98,7 +94,7 @@ const UserProfile = () => {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2 text-lg">
             <Activity className="w-5 h-5" />
-            <span>Atividades Recentes</span>
+            <span>Atividades Simuladas</span>
           </CardTitle>
         </CardHeader>
         <CardContent>

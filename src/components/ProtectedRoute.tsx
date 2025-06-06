@@ -6,11 +6,9 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  // Temporariamente removendo a verificação de autenticação
-  // TODO: Reativar autenticação quando necessário
-  console.log('🔧 ProtectedRoute - Autenticação desabilitada temporariamente');
+  console.log('🔧 ProtectedRoute - Modo desenvolvimento ativo');
   
-  // Sempre permitir acesso durante desenvolvimento
+  // Em desenvolvimento, sempre permitir acesso
   return <>{children}</>;
 };
 
