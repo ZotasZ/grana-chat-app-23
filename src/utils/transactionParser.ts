@@ -1,7 +1,7 @@
 import { Transaction } from '../types/Transaction';
 
 const CATEGORIAS: Record<string, { categoria: string; icone: string; cor: string }> = {
-  // Alimentação
+  // Alimentação e Bebidas
   'ifood': { categoria: 'Alimentação', icone: '🍔', cor: '#FF6B6B' },
   'ifd': { categoria: 'Alimentação', icone: '🍔', cor: '#FF6B6B' },
   'uber eats': { categoria: 'Alimentação', icone: '🍔', cor: '#FF6B6B' },
@@ -15,12 +15,34 @@ const CATEGORIAS: Record<string, { categoria: string; icone: string; cor: string
   'pizza': { categoria: 'Alimentação', icone: '🍕', cor: '#FF6B6B' },
   'mercado': { categoria: 'Alimentação', icone: '🛒', cor: '#FF6B6B' },
   'supermercado': { categoria: 'Alimentação', icone: '🛒', cor: '#FF6B6B' },
+  'super': { categoria: 'Alimentação', icone: '🛒', cor: '#FF6B6B' },
   'padaria': { categoria: 'Alimentação', icone: '🥖', cor: '#FF6B6B' },
   'lanchonete': { categoria: 'Alimentação', icone: '🍔', cor: '#FF6B6B' },
   'comida': { categoria: 'Alimentação', icone: '🍽️', cor: '#FF6B6B' },
-  'presente': { categoria: 'Presentes', icone: '🎁', cor: '#E67E22' },
-  'gift': { categoria: 'Presentes', icone: '🎁', cor: '#E67E22' },
-  
+  'açougue': { categoria: 'Alimentação', icone: '🥩', cor: '#FF6B6B' },
+  'acougue': { categoria: 'Alimentação', icone: '🥩', cor: '#FF6B6B' },
+  'peixaria': { categoria: 'Alimentação', icone: '🐟', cor: '#FF6B6B' },
+  'hortifruti': { categoria: 'Alimentação', icone: '🥬', cor: '#FF6B6B' },
+  'quitanda': { categoria: 'Alimentação', icone: '🥕', cor: '#FF6B6B' },
+  'feira': { categoria: 'Alimentação', icone: '🥬', cor: '#FF6B6B' },
+  'mcdonalds': { categoria: 'Alimentação', icone: '🍔', cor: '#FF6B6B' },
+  'mcdonald': { categoria: 'Alimentação', icone: '🍔', cor: '#FF6B6B' },
+  'burguer': { categoria: 'Alimentação', icone: '🍔', cor: '#FF6B6B' },
+  'burger': { categoria: 'Alimentação', icone: '🍔', cor: '#FF6B6B' },
+  'kfc': { categoria: 'Alimentação', icone: '🍗', cor: '#FF6B6B' },
+  'subway': { categoria: 'Alimentação', icone: '🥪', cor: '#FF6B6B' },
+  'starbucks': { categoria: 'Alimentação', icone: '☕', cor: '#FF6B6B' },
+  'coca cola': { categoria: 'Alimentação', icone: '🥤', cor: '#FF6B6B' },
+  'água': { categoria: 'Alimentação', icone: '💧', cor: '#FF6B6B' },
+  'agua': { categoria: 'Alimentação', icone: '💧', cor: '#FF6B6B' },
+  'refrigerante': { categoria: 'Alimentação', icone: '🥤', cor: '#FF6B6B' },
+  'cerveja': { categoria: 'Alimentação', icone: '🍺', cor: '#FF6B6B' },
+  'vinho': { categoria: 'Alimentação', icone: '🍷', cor: '#FF6B6B' },
+  'bebida': { categoria: 'Alimentação', icone: '🥤', cor: '#FF6B6B' },
+  'doce': { categoria: 'Alimentação', icone: '🍰', cor: '#FF6B6B' },
+  'sorvete': { categoria: 'Alimentação', icone: '🍦', cor: '#FF6B6B' },
+  'chocolate': { categoria: 'Alimentação', icone: '🍫', cor: '#FF6B6B' },
+
   // Transporte
   'uber': { categoria: 'Transporte', icone: '🚗', cor: '#4ECDC4' },
   '99': { categoria: 'Transporte', icone: '🚗', cor: '#4ECDC4' },
@@ -34,8 +56,19 @@ const CATEGORIAS: Record<string, { categoria: string; icone: string; cor: string
   'metrô': { categoria: 'Transporte', icone: '🚇', cor: '#4ECDC4' },
   'estacionamento': { categoria: 'Transporte', icone: '🅿️', cor: '#4ECDC4' },
   'transporte': { categoria: 'Transporte', icone: '🚗', cor: '#4ECDC4' },
-  
-  // Saúde
+  'posto': { categoria: 'Transporte', icone: '⛽', cor: '#4ECDC4' },
+  'pedágio': { categoria: 'Transporte', icone: '🛣️', cor: '#4ECDC4' },
+  'pedagio': { categoria: 'Transporte', icone: '🛣️', cor: '#4ECDC4' },
+  'mecânico': { categoria: 'Transporte', icone: '🔧', cor: '#4ECDC4' },
+  'mecanico': { categoria: 'Transporte', icone: '🔧', cor: '#4ECDC4' },
+  'oficina': { categoria: 'Transporte', icone: '🔧', cor: '#4ECDC4' },
+  'lavagem': { categoria: 'Transporte', icone: '🚿', cor: '#4ECDC4' },
+  'avião': { categoria: 'Transporte', icone: '✈️', cor: '#4ECDC4' },
+  'aviao': { categoria: 'Transporte', icone: '✈️', cor: '#4ECDC4' },
+  'passagem': { categoria: 'Transporte', icone: '🎫', cor: '#4ECDC4' },
+  'viagem': { categoria: 'Transporte', icone: '✈️', cor: '#4ECDC4' },
+
+  // Saúde e Bem-estar
   'farmácia': { categoria: 'Saúde', icone: '💊', cor: '#45B7D1' },
   'farmacia': { categoria: 'Saúde', icone: '💊', cor: '#45B7D1' },
   'médico': { categoria: 'Saúde', icone: '👨‍⚕️', cor: '#45B7D1' },
@@ -44,8 +77,23 @@ const CATEGORIAS: Record<string, { categoria: string; icone: string; cor: string
   'exame': { categoria: 'Saúde', icone: '🔬', cor: '#45B7D1' },
   'remédio': { categoria: 'Saúde', icone: '💊', cor: '#45B7D1' },
   'remedio': { categoria: 'Saúde', icone: '💊', cor: '#45B7D1' },
-  
-  // Lazer
+  'hospital': { categoria: 'Saúde', icone: '🏥', cor: '#45B7D1' },
+  'clínica': { categoria: 'Saúde', icone: '🏥', cor: '#45B7D1' },
+  'clinica': { categoria: 'Saúde', icone: '🏥', cor: '#45B7D1' },
+  'consulta': { categoria: 'Saúde', icone: '👩‍⚕️', cor: '#45B7D1' },
+  'fisioterapia': { categoria: 'Saúde', icone: '🤸', cor: '#45B7D1' },
+  'psicólogo': { categoria: 'Saúde', icone: '🧠', cor: '#45B7D1' },
+  'psicologo': { categoria: 'Saúde', icone: '🧠', cor: '#45B7D1' },
+  'nutricionista': { categoria: 'Saúde', icone: '🥗', cor: '#45B7D1' },
+  'dermatologista': { categoria: 'Saúde', icone: '🧴', cor: '#45B7D1' },
+  'oftalmologista': { categoria: 'Saúde', icone: '👁️', cor: '#45B7D1' },
+  'óculos': { categoria: 'Saúde', icone: '👓', cor: '#45B7D1' },
+  'oculos': { categoria: 'Saúde', icone: '👓', cor: '#45B7D1' },
+  'academia': { categoria: 'Saúde', icone: '💪', cor: '#45B7D1' },
+  'ginásio': { categoria: 'Saúde', icone: '💪', cor: '#45B7D1' },
+  'ginasio': { categoria: 'Saúde', icone: '💪', cor: '#45B7D1' },
+
+  // Lazer e Entretenimento
   'cinema': { categoria: 'Lazer', icone: '🎬', cor: '#F7DC6F' },
   'cin': { categoria: 'Lazer', icone: '🎬', cor: '#F7DC6F' },
   'streaming': { categoria: 'Lazer', icone: '📺', cor: '#F7DC6F' },
@@ -53,20 +101,190 @@ const CATEGORIAS: Record<string, { categoria: string; icone: string; cor: string
   'spotify': { categoria: 'Lazer', icone: '🎵', cor: '#F7DC6F' },
   'parque': { categoria: 'Lazer', icone: '🎢', cor: '#F7DC6F' },
   'bar': { categoria: 'Lazer', icone: '🍺', cor: '#F7DC6F' },
-  
+  'show': { categoria: 'Lazer', icone: '🎤', cor: '#F7DC6F' },
+  'concerto': { categoria: 'Lazer', icone: '🎼', cor: '#F7DC6F' },
+  'teatro': { categoria: 'Lazer', icone: '🎭', cor: '#F7DC6F' },
+  'museu': { categoria: 'Lazer', icone: '🏛️', cor: '#F7DC6F' },
+  'exposição': { categoria: 'Lazer', icone: '🖼️', cor: '#F7DC6F' },
+  'exposicao': { categoria: 'Lazer', icone: '🖼️', cor: '#F7DC6F' },
+  'festa': { categoria: 'Lazer', icone: '🎉', cor: '#F7DC6F' },
+  'balada': { categoria: 'Lazer', icone: '🕺', cor: '#F7DC6F' },
+  'clube': { categoria: 'Lazer', icone: '🍸', cor: '#F7DC6F' },
+  'jogo': { categoria: 'Lazer', icone: '🎮', cor: '#F7DC6F' },
+  'games': { categoria: 'Lazer', icone: '🎮', cor: '#F7DC6F' },
+  'steam': { categoria: 'Lazer', icone: '🎮', cor: '#F7DC6F' },
+  'playstation': { categoria: 'Lazer', icone: '🎮', cor: '#F7DC6F' },
+  'xbox': { categoria: 'Lazer', icone: '🎮', cor: '#F7DC6F' },
+  'nintendo': { categoria: 'Lazer', icone: '🎮', cor: '#F7DC6F' },
+
   // Educação
   'curso': { categoria: 'Educação', icone: '📚', cor: '#BB8FCE' },
   'livro': { categoria: 'Educação', icone: '📖', cor: '#BB8FCE' },
   'faculdade': { categoria: 'Educação', icone: '🎓', cor: '#BB8FCE' },
-  
-  // Casa
+  'universidade': { categoria: 'Educação', icone: '🎓', cor: '#BB8FCE' },
+  'escola': { categoria: 'Educação', icone: '🏫', cor: '#BB8FCE' },
+  'mensalidade': { categoria: 'Educação', icone: '💳', cor: '#BB8FCE' },
+  'material escolar': { categoria: 'Educação', icone: '📝', cor: '#BB8FCE' },
+  'caderno': { categoria: 'Educação', icone: '📓', cor: '#BB8FCE' },
+  'caneta': { categoria: 'Educação', icone: '✏️', cor: '#BB8FCE' },
+  'lápis': { categoria: 'Educação', icone: '✏️', cor: '#BB8FCE' },
+  'lapis': { categoria: 'Educação', icone: '✏️', cor: '#BB8FCE' },
+  'mochila': { categoria: 'Educação', icone: '🎒', cor: '#BB8FCE' },
+  'estágio': { categoria: 'Educação', icone: '👔', cor: '#BB8FCE' },
+  'estagio': { categoria: 'Educação', icone: '👔', cor: '#BB8FCE' },
+
+  // Casa e Moradia
   'casa': { categoria: 'Casa', icone: '🏠', cor: '#82E0AA' },
   'aluguel': { categoria: 'Casa', icone: '🏠', cor: '#82E0AA' },
   'luz': { categoria: 'Casa', icone: '💡', cor: '#82E0AA' },
+  'energia': { categoria: 'Casa', icone: '💡', cor: '#82E0AA' },
   'água': { categoria: 'Casa', icone: '💧', cor: '#82E0AA' },
-  'agua': { categoria: 'Casa', icone: '💧', cor: '#82E0AA' },
   'internet': { categoria: 'Casa', icone: '📶', cor: '#82E0AA' },
   'limpeza': { categoria: 'Casa', icone: '🧽', cor: '#82E0AA' },
+  'gás': { categoria: 'Casa', icone: '🔥', cor: '#82E0AA' },
+  'gas': { categoria: 'Casa', icone: '🔥', cor: '#82E0AA' },
+  'condomínio': { categoria: 'Casa', icone: '🏢', cor: '#82E0AA' },
+  'condominio': { categoria: 'Casa', icone: '🏢', cor: '#82E0AA' },
+  'iptu': { categoria: 'Casa', icone: '🏠', cor: '#82E0AA' },
+  'móveis': { categoria: 'Casa', icone: '🛋️', cor: '#82E0AA' },
+  'moveis': { categoria: 'Casa', icone: '🛋️', cor: '#82E0AA' },
+  'eletrodoméstico': { categoria: 'Casa', icone: '🔌', cor: '#82E0AA' },
+  'eletrodomestico': { categoria: 'Casa', icone: '🔌', cor: '#82E0AA' },
+  'geladeira': { categoria: 'Casa', icone: '🧊', cor: '#82E0AA' },
+  'fogão': { categoria: 'Casa', icone: '🔥', cor: '#82E0AA' },
+  'fogao': { categoria: 'Casa', icone: '🔥', cor: '#82E0AA' },
+  'microondas': { categoria: 'Casa', icone: '📻', cor: '#82E0AA' },
+  'televisão': { categoria: 'Casa', icone: '📺', cor: '#82E0AA' },
+  'televisao': { categoria: 'Casa', icone: '📺', cor: '#82E0AA' },
+  'tv': { categoria: 'Casa', icone: '📺', cor: '#82E0AA' },
+  'manutenção': { categoria: 'Casa', icone: '🔧', cor: '#82E0AA' },
+  'manutencao': { categoria: 'Casa', icone: '🔧', cor: '#82E0AA' },
+  'reforma': { categoria: 'Casa', icone: '🏗️', cor: '#82E0AA' },
+  'pintura': { categoria: 'Casa', icone: '🎨', cor: '#82E0AA' },
+  'encanador': { categoria: 'Casa', icone: '🔧', cor: '#82E0AA' },
+  'eletricista': { categoria: 'Casa', icone: '⚡', cor: '#82E0AA' },
+  'jardinagem': { categoria: 'Casa', icone: '🌱', cor: '#82E0AA' },
+
+  // Vestuário e Beleza
+  'roupa': { categoria: 'Vestuário', icone: '👕', cor: '#F8C471' },
+  'tênis': { categoria: 'Vestuário', icone: '👟', cor: '#F8C471' },
+  'tenis': { categoria: 'Vestuário', icone: '👟', cor: '#F8C471' },
+  'sapato': { categoria: 'Vestuário', icone: '👞', cor: '#F8C471' },
+  'camisa': { categoria: 'Vestuário', icone: '👔', cor: '#F8C471' },
+  'calça': { categoria: 'Vestuário', icone: '👖', cor: '#F8C471' },
+  'calca': { categoria: 'Vestuário', icone: '👖', cor: '#F8C471' },
+  'vestido': { categoria: 'Vestuário', icone: '👗', cor: '#F8C471' },
+  'blusa': { categoria: 'Vestuário', icone: '👚', cor: '#F8C471' },
+  'camiseta': { categoria: 'Vestuário', icone: '👕', cor: '#F8C471' },
+  'jaqueta': { categoria: 'Vestuário', icone: '🧥', cor: '#F8C471' },
+  'casaco': { categoria: 'Vestuário', icone: '🧥', cor: '#F8C471' },
+  'bermuda': { categoria: 'Vestuário', icone: '🩳', cor: '#F8C471' },
+  'short': { categoria: 'Vestuário', icone: '🩳', cor: '#F8C471' },
+  'meia': { categoria: 'Vestuário', icone: '🧦', cor: '#F8C471' },
+  'cueca': { categoria: 'Vestuário', icone: '🩲', cor: '#F8C471' },
+  'calcinha': { categoria: 'Vestuário', icone: '🩲', cor: '#F8C471' },
+  'sutiã': { categoria: 'Vestuário', icone: '👙', cor: '#F8C471' },
+  'sutia': { categoria: 'Vestuário', icone: '👙', cor: '#F8C471' },
+  'bolsa': { categoria: 'Vestuário', icone: '👜', cor: '#F8C471' },
+  'carteira': { categoria: 'Vestuário', icone: '👛', cor: '#F8C471' },
+  'relógio': { categoria: 'Vestuário', icone: '⌚', cor: '#F8C471' },
+  'relogio': { categoria: 'Vestuário', icone: '⌚', cor: '#F8C471' },
+  'colar': { categoria: 'Vestuário', icone: '📿', cor: '#F8C471' },
+  'anel': { categoria: 'Vestuário', icone: '💍', cor: '#F8C471' },
+  'brinco': { categoria: 'Vestuário', icone: '💎', cor: '#F8C471' },
+  'salão': { categoria: 'Beleza', icone: '💇', cor: '#E8DAEF' },
+  'salao': { categoria: 'Beleza', icone: '💇', cor: '#E8DAEF' },
+  'cabelo': { categoria: 'Beleza', icone: '💇', cor: '#E8DAEF' },
+  'cabeleireiro': { categoria: 'Beleza', icone: '💇', cor: '#E8DAEF' },
+  'manicure': { categoria: 'Beleza', icone: '💅', cor: '#E8DAEF' },
+  'unha': { categoria: 'Beleza', icone: '💅', cor: '#E8DAEF' },
+  'sobrancelha': { categoria: 'Beleza', icone: '👁️', cor: '#E8DAEF' },
+  'depilação': { categoria: 'Beleza', icone: '🪒', cor: '#E8DAEF' },
+  'depilacao': { categoria: 'Beleza', icone: '🪒', cor: '#E8DAEF' },
+  'maquiagem': { categoria: 'Beleza', icone: '💄', cor: '#E8DAEF' },
+  'perfume': { categoria: 'Beleza', icone: '🌸', cor: '#E8DAEF' },
+  'shampoo': { categoria: 'Beleza', icone: '🧴', cor: '#E8DAEF' },
+  'condicionador': { categoria: 'Beleza', icone: '🧴', cor: '#E8DAEF' },
+  'creme': { categoria: 'Beleza', icone: '🧴', cor: '#E8DAEF' },
+  'protetor solar': { categoria: 'Beleza', icone: '☀️', cor: '#E8DAEF' },
+
+  // Tecnologia
+  'celular': { categoria: 'Tecnologia', icone: '📱', cor: '#AED6F1' },
+  'smartphone': { categoria: 'Tecnologia', icone: '📱', cor: '#AED6F1' },
+  'computador': { categoria: 'Tecnologia', icone: '💻', cor: '#AED6F1' },
+  'notebook': { categoria: 'Tecnologia', icone: '💻', cor: '#AED6F1' },
+  'tablet': { categoria: 'Tecnologia', icone: '📟', cor: '#AED6F1' },
+  'fone': { categoria: 'Tecnologia', icone: '🎧', cor: '#AED6F1' },
+  'headphone': { categoria: 'Tecnologia', icone: '🎧', cor: '#AED6F1' },
+  'carregador': { categoria: 'Tecnologia', icone: '🔌', cor: '#AED6F1' },
+  'cabo': { categoria: 'Tecnologia', icone: '🔌', cor: '#AED6F1' },
+  'impressora': { categoria: 'Tecnologia', icone: '🖨️', cor: '#AED6F1' },
+  'mouse': { categoria: 'Tecnologia', icone: '🖱️', cor: '#AED6F1' },
+  'teclado': { categoria: 'Tecnologia', icone: '⌨️', cor: '#AED6F1' },
+  'monitor': { categoria: 'Tecnologia', icone: '🖥️', cor: '#AED6F1' },
+  'software': { categoria: 'Tecnologia', icone: '💾', cor: '#AED6F1' },
+  'aplicativo': { categoria: 'Tecnologia', icone: '📱', cor: '#AED6F1' },
+  'app': { categoria: 'Tecnologia', icone: '📱', cor: '#AED6F1' },
+
+  // Pets
+  'veterinário': { categoria: 'Pets', icone: '🐕', cor: '#D2B4DE' },
+  'veterinario': { categoria: 'Pets', icone: '🐕', cor: '#D2B4DE' },
+  'ração': { categoria: 'Pets', icone: '🦴', cor: '#D2B4DE' },
+  'racao': { categoria: 'Pets', icone: '🦴', cor: '#D2B4DE' },
+  'pet shop': { categoria: 'Pets', icone: '🐕', cor: '#D2B4DE' },
+  'petshop': { categoria: 'Pets', icone: '🐕', cor: '#D2B4DE' },
+  'vacina': { categoria: 'Pets', icone: '💉', cor: '#D2B4DE' },
+  'banho': { categoria: 'Pets', icone: '🛁', cor: '#D2B4DE' },
+  'tosa': { categoria: 'Pets', icone: '✂️', cor: '#D2B4DE' },
+  'brinquedo': { categoria: 'Pets', icone: '🎾', cor: '#D2B4DE' },
+  'coleira': { categoria: 'Pets', icone: '🦮', cor: '#D2B4DE' },
+  'cama': { categoria: 'Pets', icone: '🛏️', cor: '#D2B4DE' },
+  'casinha': { categoria: 'Pets', icone: '🏠', cor: '#D2B4DE' },
+
+  // Trabalho
+  'material escritório': { categoria: 'Trabalho', icone: '📋', cor: '#A9DFBF' },
+  'escritório': { categoria: 'Trabalho', icone: '🏢', cor: '#A9DFBF' },
+  'escritorio': { categoria: 'Trabalho', icone: '🏢', cor: '#A9DFBF' },
+  'impressão': { categoria: 'Trabalho', icone: '🖨️', cor: '#A9DFBF' },
+  'impressao': { categoria: 'Trabalho', icone: '🖨️', cor: '#A9DFBF' },
+  'xerox': { categoria: 'Trabalho', icone: '📄', cor: '#A9DFBF' },
+  'papelaria': { categoria: 'Trabalho', icone: '📝', cor: '#A9DFBF' },
+  'pasta': { categoria: 'Trabalho', icone: '📁', cor: '#A9DFBF' },
+  'arquivo': { categoria: 'Trabalho', icone: '📋', cor: '#A9DFBF' },
+  'reunião': { categoria: 'Trabalho', icone: '👔', cor: '#A9DFBF' },
+  'reuniao': { categoria: 'Trabalho', icone: '👔', cor: '#A9DFBF' },
+
+  // Presentes e Ocasiões Especiais
+  'presente': { categoria: 'Presentes', icone: '🎁', cor: '#E67E22' },
+  'gift': { categoria: 'Presentes', icone: '🎁', cor: '#E67E22' },
+  'aniversário': { categoria: 'Presentes', icone: '🎂', cor: '#E67E22' },
+  'aniversario': { categoria: 'Presentes', icone: '🎂', cor: '#E67E22' },
+  'natal': { categoria: 'Presentes', icone: '🎄', cor: '#E67E22' },
+  'páscoa': { categoria: 'Presentes', icone: '🐰', cor: '#E67E22' },
+  'pascoa': { categoria: 'Presentes', icone: '🐰', cor: '#E67E22' },
+  'dia das mães': { categoria: 'Presentes', icone: '💐', cor: '#E67E22' },
+  'dia das maes': { categoria: 'Presentes', icone: '💐', cor: '#E67E22' },
+  'dia dos pais': { categoria: 'Presentes', icone: '👔', cor: '#E67E22' },
+  'casamento': { categoria: 'Presentes', icone: '💒', cor: '#E67E22' },
+  'formatura': { categoria: 'Presentes', icone: '🎓', cor: '#E67E22' },
+  'flores': { categoria: 'Presentes', icone: '🌸', cor: '#E67E22' },
+  'buquê': { categoria: 'Presentes', icone: '💐', cor: '#E67E22' },
+  'buque': { categoria: 'Presentes', icone: '💐', cor: '#E67E22' },
+
+  // Seguros e Investimentos
+  'seguro': { categoria: 'Financeiro', icone: '🛡️', cor: '#85929E' },
+  'investimento': { categoria: 'Financeiro', icone: '📈', cor: '#85929E' },
+  'banco': { categoria: 'Financeiro', icone: '🏦', cor: '#85929E' },
+  'empréstimo': { categoria: 'Financeiro', icone: '💰', cor: '#85929E' },
+  'emprestimo': { categoria: 'Financeiro', icone: '💰', cor: '#85929E' },
+  'financiamento': { categoria: 'Financeiro', icone: '🏠', cor: '#85929E' },
+  'cartão': { categoria: 'Financeiro', icone: '💳', cor: '#85929E' },
+  'cartao': { categoria: 'Financeiro', icone: '💳', cor: '#85929E' },
+  'anuidade': { categoria: 'Financeiro', icone: '💳', cor: '#85929E' },
+  'taxa': { categoria: 'Financeiro', icone: '💸', cor: '#85929E' },
+  'juros': { categoria: 'Financeiro', icone: '📊', cor: '#85929E' },
+  'multa': { categoria: 'Financeiro', icone: '⚠️', cor: '#85929E' },
+  'conta': { categoria: 'Financeiro', icone: '🏦', cor: '#85929E' }
 };
 
 // Mapeamento robusto para formas de pagamento - separando claramente crédito e débito
@@ -281,6 +499,12 @@ function getSuggestedValue(categoria: string): number {
     'Lazer': 40.00,
     'Educação': 100.00,
     'Casa': 80.00,
+    'Vestuário': 60.00,
+    'Beleza': 40.00,
+    'Tecnologia': 150.00,
+    'Pets': 35.00,
+    'Trabalho': 25.00,
+    'Financeiro': 100.00,
     'Outros': 20.00
   };
   
@@ -402,9 +626,12 @@ function findCategory(descricao: string): { categoria: string; icone: string; co
   
   console.log('🏷️ Buscando categoria para:', descricaoLower);
   
-  // Buscar correspondência exata ou parcial
-  for (const [key, info] of Object.entries(CATEGORIAS)) {
+  // Buscar correspondência exata ou parcial - busca mais específica primeiro
+  const sortedKeys = Object.keys(CATEGORIAS).sort((a, b) => b.length - a.length);
+  
+  for (const key of sortedKeys) {
     if (descricaoLower.includes(key) || key.includes(descricaoLower)) {
+      const info = CATEGORIAS[key];
       console.log('✅ Categoria encontrada:', info.categoria);
       return info;
     }

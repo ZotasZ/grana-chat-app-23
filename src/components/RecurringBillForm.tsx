@@ -17,14 +17,33 @@ interface RecurringBillFormProps {
 }
 
 const categorias = [
+  // Alimentação
+  'Alimentação',
+  'Supermercado',
+  'Delivery',
+  'Restaurante',
+  'Padaria',
+  'Açougue',
+  'Hortifruti',
+  
+  // Casa e Moradia
   'Moradia',
+  'Aluguel',
   'Energia Elétrica',
   'Água e Esgoto',
   'Gás',
   'Internet',
   'Telefone',
   'TV por Assinatura',
-  'Streaming',
+  'Condomínio',
+  'IPTU',
+  'Móveis',
+  'Eletrodomésticos',
+  'Decoração',
+  'Limpeza',
+  'Manutenção',
+  
+  // Transporte
   'Transporte',
   'Combustível',
   'Estacionamento',
@@ -33,61 +52,103 @@ const categorias = [
   'IPVA',
   'Financiamento Veículo',
   'Consórcio',
-  'Alimentação',
-  'Supermercado',
-  'Restaurantes',
+  'Uber/99',
+  'Transporte Público',
+  
+  // Saúde
   'Saúde',
   'Plano de Saúde',
   'Medicamentos',
   'Consultas',
   'Exames',
+  'Dentista',
+  'Farmácia',
+  'Academia',
+  'Fisioterapia',
+  
+  // Educação
   'Educação',
   'Mensalidade Escolar',
   'Curso',
   'Livros',
   'Material Escolar',
+  'Faculdade',
+  'Pós-graduação',
+  
+  // Financeiro
   'Financeiro',
   'Empréstimo',
   'Financiamento',
   'Cartão de Crédito',
   'Conta Bancária',
   'Investimentos',
+  'Anuidade',
+  'Taxas Bancárias',
+  
+  // Seguros
   'Seguros',
   'Seguro Vida',
   'Seguro Residencial',
   'Seguro Saúde',
+  
+  // Lazer e Entretenimento
   'Lazer',
-  'Academia',
+  'Streaming',
+  'Netflix',
+  'Spotify',
   'Cinema',
   'Shows',
   'Viagens',
+  'Games',
+  'Clube',
+  
+  // Vestuário e Beleza
+  'Vestuário',
+  'Roupas',
+  'Calçados',
+  'Acessórios',
   'Beleza',
   'Salão',
   'Produtos de Beleza',
-  'Roupas',
-  'Vestuário',
-  'Calçados',
-  'Acessórios',
-  'Casa',
-  'Móveis',
-  'Eletrodomésticos',
-  'Decoração',
-  'Limpeza',
-  'Manutenção',
-  'Condomínio',
-  'IPTU',
-  'Animais',
-  'Veterinário',
-  'Ração',
-  'Pet Shop',
-  'Trabalho',
-  'Material de Escritório',
-  'Transporte Trabalho',
+  'Perfumaria',
+  
+  // Tecnologia
   'Tecnologia',
   'Software',
   'Aplicativos',
   'Equipamentos',
-  'Outros'
+  'Celular',
+  'Assinatura Digital',
+  
+  // Trabalho
+  'Trabalho',
+  'Material de Escritório',
+  'Transporte Trabalho',
+  'Almoço Trabalho',
+  'Cursos Profissionais',
+  
+  // Pets
+  'Pets',
+  'Veterinário',
+  'Ração',
+  'Pet Shop',
+  'Vacinas',
+  'Banho e Tosa',
+  
+  // Presentes e Ocasiões
+  'Presentes',
+  'Aniversários',
+  'Datas Comemorativas',
+  'Flores',
+  'Cartões',
+  
+  // Outros
+  'Outros',
+  'Doações',
+  'Caridade',
+  'Impostos',
+  'Multas',
+  'Serviços Diversos'
 ];
 
 export function RecurringBillForm({ onClose, editingId, onSuccess }: RecurringBillFormProps) {
