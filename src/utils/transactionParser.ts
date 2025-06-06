@@ -138,7 +138,6 @@ const CATEGORIAS: Record<string, { categoria: string; icone: string; cor: string
   'aluguel': { categoria: 'Casa', icone: '🏠', cor: '#82E0AA' },
   'luz': { categoria: 'Casa', icone: '💡', cor: '#82E0AA' },
   'energia': { categoria: 'Casa', icone: '💡', cor: '#82E0AA' },
-  'água': { categoria: 'Casa', icone: '💧', cor: '#82E0AA' },
   'internet': { categoria: 'Casa', icone: '📶', cor: '#82E0AA' },
   'limpeza': { categoria: 'Casa', icone: '🧽', cor: '#82E0AA' },
   'gás': { categoria: 'Casa', icone: '🔥', cor: '#82E0AA' },
@@ -238,8 +237,8 @@ const CATEGORIAS: Record<string, { categoria: string; icone: string; cor: string
   'tosa': { categoria: 'Pets', icone: '✂️', cor: '#D2B4DE' },
   'brinquedo': { categoria: 'Pets', icone: '🎾', cor: '#D2B4DE' },
   'coleira': { categoria: 'Pets', icone: '🦮', cor: '#D2B4DE' },
-  'cama': { categoria: 'Pets', icone: '🛏️', cor: '#D2B4DE' },
-  'casinha': { categoria: 'Pets', icone: '🏠', cor: '#D2B4DE' },
+  'cama pet': { categoria: 'Pets', icone: '🛏️', cor: '#D2B4DE' },
+  'casinha pet': { categoria: 'Pets', icone: '🏠', cor: '#D2B4DE' },
 
   // Trabalho
   'material escritório': { categoria: 'Trabalho', icone: '📋', cor: '#A9DFBF' },
