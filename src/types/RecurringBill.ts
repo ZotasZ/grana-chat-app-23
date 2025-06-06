@@ -10,9 +10,6 @@ export interface RecurringBill {
   ativo: boolean;
   criadoEm: Date;
   proximoVencimento: Date;
-  formaPagamento?: string;
-  banco?: string;
-  codigoBarras?: string;
 }
 
 export interface RecurringBillFormData {
@@ -21,7 +18,4 @@ export interface RecurringBillFormData {
   categoria: string;
   dataVencimento: number;
   descricao?: string;
-  formaPagamento?: string;
-  banco?: string;
-  codigoBarras?: string;
 }

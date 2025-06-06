@@ -18,20 +18,76 @@ interface RecurringBillFormProps {
 
 const categorias = [
   'Moradia',
-  'Transporte', 
-  'Serviços',
+  'Energia Elétrica',
+  'Água e Esgoto',
+  'Gás',
+  'Internet',
+  'Telefone',
+  'TV por Assinatura',
+  'Streaming',
+  'Transporte',
+  'Combustível',
+  'Estacionamento',
+  'Pedágio',
+  'Seguro Veículo',
+  'IPVA',
+  'Financiamento Veículo',
+  'Consórcio',
+  'Alimentação',
+  'Supermercado',
+  'Restaurantes',
+  'Saúde',
+  'Plano de Saúde',
+  'Medicamentos',
+  'Consultas',
+  'Exames',
+  'Educação',
+  'Mensalidade Escolar',
+  'Curso',
+  'Livros',
+  'Material Escolar',
   'Financeiro',
-  'Outros'
-];
-
-const formasPagamento = [
-  'Débito Automático',
-  'Boleto',
-  'PIX',
+  'Empréstimo',
+  'Financiamento',
   'Cartão de Crédito',
-  'Cartão de Débito',
-  'Dinheiro',
-  'Transferência Bancária'
+  'Conta Bancária',
+  'Investimentos',
+  'Seguros',
+  'Seguro Vida',
+  'Seguro Residencial',
+  'Seguro Saúde',
+  'Lazer',
+  'Academia',
+  'Cinema',
+  'Shows',
+  'Viagens',
+  'Beleza',
+  'Salão',
+  'Produtos de Beleza',
+  'Roupas',
+  'Vestuário',
+  'Calçados',
+  'Acessórios',
+  'Casa',
+  'Móveis',
+  'Eletrodomésticos',
+  'Decoração',
+  'Limpeza',
+  'Manutenção',
+  'Condomínio',
+  'IPTU',
+  'Animais',
+  'Veterinário',
+  'Ração',
+  'Pet Shop',
+  'Trabalho',
+  'Material de Escritório',
+  'Transporte Trabalho',
+  'Tecnologia',
+  'Software',
+  'Aplicativos',
+  'Equipamentos',
+  'Outros'
 ];
 
 export function RecurringBillForm({ onClose, editingId, onSuccess }: RecurringBillFormProps) {
@@ -41,10 +97,7 @@ export function RecurringBillForm({ onClose, editingId, onSuccess }: RecurringBi
     valor: 0,
     categoria: '',
     dataVencimento: 1,
-    descricao: '',
-    formaPagamento: '',
-    banco: '',
-    codigoBarras: ''
+    descricao: ''
   });
 
   useEffect(() => {
@@ -56,10 +109,7 @@ export function RecurringBillForm({ onClose, editingId, onSuccess }: RecurringBi
           valor: bill.valor,
           categoria: bill.categoria,
           dataVencimento: bill.dataVencimento,
-          descricao: bill.descricao || '',
-          formaPagamento: bill.formaPagamento || '',
-          banco: bill.banco || '',
-          codigoBarras: bill.codigoBarras || ''
+          descricao: bill.descricao || ''
         });
       }
     }
@@ -143,7 +193,7 @@ export function RecurringBillForm({ onClose, editingId, onSuccess }: RecurringBi
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione uma categoria" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-60 overflow-y-auto">
                   {categorias.map(categoria => (
                     <SelectItem key={categoria} value={categoria}>
                       {categoria}
@@ -180,48 +230,7 @@ export function RecurringBillForm({ onClose, editingId, onSuccess }: RecurringBi
               value={formData.descricao}
               onChange={(e) => handleInputChange('descricao', e.target.value)}
               placeholder="Informações adicionais sobre a conta"
-              rows={2}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="formaPagamento">Forma de Pagamento</Label>
-              <Select 
-                value={formData.formaPagamento} 
-                onValueChange={(value) => handleInputChange('formaPagamento', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Como você paga?" />
-                </SelectTrigger>
-                <SelectContent>
-                  {formasPagamento.map(forma => (
-                    <SelectItem key={forma} value={forma}>
-                      {forma}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="banco">Banco/Empresa</Label>
-              <Input
-                id="banco"
-                value={formData.banco}
-                onChange={(e) => handleInputChange('banco', e.target.value)}
-                placeholder="Ex: CPFL, Sabesp, Itaú"
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="codigoBarras">Código de Barras</Label>
-            <Input
-              id="codigoBarras"
-              value={formData.codigoBarras}
-              onChange={(e) => handleInputChange('codigoBarras', e.target.value)}
-              placeholder="Cole aqui o código de barras do boleto"
+              rows={3}
             />
           </div>
 

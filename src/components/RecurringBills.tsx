@@ -33,9 +33,25 @@ export function RecurringBills() {
   const getCategoryColor = (categoria: string) => {
     const colors: Record<string, string> = {
       'Moradia': 'bg-blue-100 text-blue-800',
+      'Energia Elétrica': 'bg-yellow-100 text-yellow-800',
+      'Água e Esgoto': 'bg-cyan-100 text-cyan-800',
+      'Gás': 'bg-orange-100 text-orange-800',
+      'Internet': 'bg-purple-100 text-purple-800',
+      'Telefone': 'bg-green-100 text-green-800',
+      'TV por Assinatura': 'bg-indigo-100 text-indigo-800',
+      'Streaming': 'bg-pink-100 text-pink-800',
       'Transporte': 'bg-green-100 text-green-800',
-      'Serviços': 'bg-purple-100 text-purple-800',
+      'Saúde': 'bg-red-100 text-red-800',
+      'Educação': 'bg-blue-100 text-blue-800',
       'Financeiro': 'bg-orange-100 text-orange-800',
+      'Seguros': 'bg-gray-100 text-gray-800',
+      'Lazer': 'bg-purple-100 text-purple-800',
+      'Beleza': 'bg-pink-100 text-pink-800',
+      'Vestuário': 'bg-indigo-100 text-indigo-800',
+      'Casa': 'bg-amber-100 text-amber-800',
+      'Animais': 'bg-emerald-100 text-emerald-800',
+      'Trabalho': 'bg-slate-100 text-slate-800',
+      'Tecnologia': 'bg-violet-100 text-violet-800',
       'Outros': 'bg-gray-100 text-gray-800'
     };
     return colors[categoria] || colors['Outros'];
@@ -81,7 +97,7 @@ export function RecurringBills() {
                 <div className="flex justify-between items-start">
                   <div>
                     <CardTitle className="text-lg">{bill.nome}</CardTitle>
-                    <p className="text-sm text-gray-600">{bill.descricao}</p>
+                    {bill.descricao && <p className="text-sm text-gray-600">{bill.descricao}</p>}
                   </div>
                   <div className="flex gap-2">
                     <Button
@@ -132,12 +148,6 @@ export function RecurringBills() {
                   </span>
                 </div>
 
-                {bill.formaPagamento && (
-                  <p className="text-sm text-gray-600 mb-2">
-                    Forma de pagamento: {bill.formaPagamento}
-                  </p>
-                )}
-
                 <div className="flex justify-between items-center">
                   {bill.imagemBoleto ? (
                     <div className="flex items-center gap-2">
@@ -172,7 +182,7 @@ export function RecurringBills() {
                 <div className="flex justify-between items-start">
                   <div>
                     <CardTitle className="text-lg text-gray-600">{bill.nome}</CardTitle>
-                    <p className="text-sm text-gray-500">{bill.descricao}</p>
+                    {bill.descricao && <p className="text-sm text-gray-500">{bill.descricao}</p>}
                   </div>
                   <div className="flex gap-2">
                     <Button
