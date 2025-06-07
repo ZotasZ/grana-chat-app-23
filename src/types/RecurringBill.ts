@@ -10,6 +10,16 @@ export interface RecurringBill {
   ativo: boolean;
   criadoEm: Date;
   proximoVencimento: Date;
+  // Novos campos para alertas
+  alertaUmDia?: boolean;
+  alertaDiaVencimento?: boolean;
+  // Novos campos para parcelas
+  ehParcelado?: boolean;
+  valorTotal?: number;
+  numeroParcelas?: number;
+  parcelaAtual?: number;
+  grupoParcelaId?: string;
+  statusPagamento?: 'pendente' | 'pago';
 }
 
 export interface RecurringBillFormData {
@@ -18,4 +28,21 @@ export interface RecurringBillFormData {
   categoria: string;
   dataVencimento: number;
   descricao?: string;
+  alertaUmDia?: boolean;
+  alertaDiaVencimento?: boolean;
+  // Campos para parcelas
+  ehParcelado?: boolean;
+  valorTotal?: number;
+  numeroParcelas?: number;
+}
+
+export interface ParcelaFormData {
+  nome: string;
+  valorTotal: number;
+  numeroParcelas: number;
+  dataVencimento: number;
+  categoria: string;
+  descricao?: string;
+  alertaUmDia?: boolean;
+  alertaDiaVencimento?: boolean;
 }

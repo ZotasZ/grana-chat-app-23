@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
-import { X, Save } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Save, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,212 +9,59 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useRecurringBillsStore } from '@/stores/recurringBillsStore';
-import { RecurringBillFormData } from '@/types/RecurringBill';
+import { ParcelaFormData } from '@/types/RecurringBill';
 
-interface RecurringBillFormProps {
+interface ParcelaFormProps {
   onClose: () => void;
-  editingId?: string | null;
   onSuccess: () => void;
 }
 
 const categorias = [
-  // Alimentação
-  'Alimentação',
-  'Supermercado',
-  'Delivery',
-  'Restaurante',
-  'Padaria',
-  'Açougue',
-  'Hortifruti',
-  
-  // Casa e Moradia
-  'Moradia',
-  'Aluguel',
-  'Energia Elétrica',
-  'Água e Esgoto',
-  'Gás',
-  'Internet',
-  'Telefone',
-  'TV por Assinatura',
-  'Condomínio',
-  'IPTU',
-  'Móveis',
-  'Eletrodomésticos',
-  'Decoração',
-  'Limpeza',
-  'Manutenção',
-  
-  // Transporte
-  'Transporte',
-  'Combustível',
-  'Estacionamento',
-  'Pedágio',
-  'Seguro Veículo',
-  'IPVA',
-  'Financiamento Veículo',
-  'Consórcio',
-  'Uber/99',
-  'Transporte Público',
-  
-  // Saúde
-  'Saúde',
-  'Plano de Saúde',
-  'Medicamentos',
-  'Consultas',
-  'Exames',
-  'Dentista',
-  'Farmácia',
-  'Academia',
-  'Fisioterapia',
-  
-  // Educação
-  'Educação',
-  'Mensalidade Escolar',
-  'Curso',
-  'Livros',
-  'Material Escolar',
-  'Faculdade',
-  'Pós-graduação',
-  
-  // Financeiro
-  'Financeiro',
-  'Empréstimo',
-  'Financiamento',
-  'Cartão de Crédito',
-  'Conta Bancária',
-  'Investimentos',
-  'Anuidade',
-  'Taxas Bancárias',
-  
-  // Seguros
-  'Seguros',
-  'Seguro Vida',
-  'Seguro Residencial',
-  'Seguro Saúde',
-  
-  // Lazer e Entretenimento
-  'Lazer',
-  'Streaming',
-  'Netflix',
-  'Spotify',
-  'Cinema',
-  'Shows',
-  'Viagens',
-  'Games',
-  'Clube',
-  
-  // Vestuário e Beleza
-  'Vestuário',
-  'Roupas',
-  'Calçados',
-  'Acessórios',
-  'Beleza',
-  'Salão',
-  'Produtos de Beleza',
-  'Perfumaria',
-  
-  // Tecnologia
-  'Tecnologia',
-  'Software',
-  'Aplicativos',
-  'Equipamentos',
-  'Celular',
-  'Assinatura Digital',
-  
-  // Trabalho
-  'Trabalho',
-  'Material de Escritório',
-  'Transporte Trabalho',
-  'Almoço Trabalho',
-  'Cursos Profissionais',
-  
-  // Pets
-  'Pets',
-  'Veterinário',
-  'Ração',
-  'Pet Shop',
-  'Vacinas',
-  'Banho e Tosa',
-  
-  // Presentes e Ocasiões
-  'Presentes',
-  'Aniversários',
-  'Datas Comemorativas',
-  'Flores',
-  'Cartões',
-  
-  // Outros
-  'Outros',
-  'Doações',
-  'Caridade',
-  'Impostos',
-  'Multas',
-  'Serviços Diversos'
+  'Financiamento', 'Empréstimo', 'Cartão de Crédito', 'Compras',
+  'Casa', 'Veículo', 'Educação', 'Saúde', 'Outros'
 ];
 
-export function RecurringBillForm({ onClose, editingId, onSuccess }: RecurringBillFormProps) {
-  const { addBill, updateBill, bills } = useRecurringBillsStore();
-  const [formData, setFormData] = useState<RecurringBillFormData>({
+export function ParcelaForm({ onClose, onSuccess }: ParcelaFormProps) {
+  const { addParceladoBill } = useRecurringBillsStore();
+  const [formData, setFormData] = useState<ParcelaFormData>({
     nome: '',
-    valor: 0,
-    categoria: '',
+    valorTotal: 0,
+    numeroParcelas: 1,
     dataVencimento: 1,
+    categoria: '',
     descricao: '',
     alertaUmDia: true,
     alertaDiaVencimento: true
   });
 
-  useEffect(() => {
-    if (editingId) {
-      const bill = bills.find(b => b.id === editingId);
-      if (bill) {
-        setFormData({
-          nome: bill.nome,
-          valor: bill.valor,
-          categoria: bill.categoria,
-          dataVencimento: bill.dataVencimento,
-          descricao: bill.descricao || '',
-          alertaUmDia: bill.alertaUmDia ?? true,
-          alertaDiaVencimento: bill.alertaDiaVencimento ?? true
-        });
-      }
-    }
-  }, [editingId, bills]);
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.nome || !formData.categoria || formData.valor <= 0) {
+    if (!formData.nome || !formData.categoria || formData.valorTotal <= 0 || formData.numeroParcelas <= 0) {
       alert('Preencha todos os campos obrigatórios');
       return;
     }
 
-    if (editingId) {
-      updateBill(editingId, formData);
-    } else {
-      addBill({
-        ...formData,
-        ativo: true,
-        statusPagamento: 'pendente'
-      });
-    }
-
+    addParceladoBill(formData);
     onSuccess();
   };
 
-  const handleInputChange = (field: keyof RecurringBillFormData, value: any) => {
+  const handleInputChange = (field: keyof ParcelaFormData, value: any) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
+  const valorParcela = formData.valorTotal / (formData.numeroParcelas || 1);
+
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
         <div className="flex justify-between items-center">
-          <CardTitle>
-            {editingId ? 'Editar Conta Recorrente' : 'Nova Conta Recorrente'}
+          <CardTitle className="flex items-center gap-2">
+            <CreditCard className="w-5 h-5" />
+            Nova Dívida Parcelada
           </CardTitle>
           <Button variant="outline" size="sm" onClick={onClose}>
             <X className="w-4 h-4" />
@@ -223,30 +70,50 @@ export function RecurringBillForm({ onClose, editingId, onSuccess }: RecurringBi
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="nome">Nome da Dívida *</Label>
+            <Input
+              id="nome"
+              value={formData.nome}
+              onChange={(e) => handleInputChange('nome', e.target.value)}
+              placeholder="Ex: Financiamento do carro"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="nome">Nome da Conta *</Label>
+              <Label htmlFor="valorTotal">Valor Total (R$) *</Label>
               <Input
-                id="nome"
-                value={formData.nome}
-                onChange={(e) => handleInputChange('nome', e.target.value)}
-                placeholder="Ex: Conta de Luz"
+                id="valorTotal"
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.valorTotal}
+                onChange={(e) => handleInputChange('valorTotal', parseFloat(e.target.value) || 0)}
+                placeholder="0,00"
                 required
               />
             </div>
 
             <div>
-              <Label htmlFor="valor">Valor (R$) *</Label>
+              <Label htmlFor="numeroParcelas">Número de Parcelas *</Label>
               <Input
-                id="valor"
+                id="numeroParcelas"
                 type="number"
-                step="0.01"
-                min="0"
-                value={formData.valor}
-                onChange={(e) => handleInputChange('valor', parseFloat(e.target.value) || 0)}
-                placeholder="0,00"
+                min="1"
+                max="60"
+                value={formData.numeroParcelas}
+                onChange={(e) => handleInputChange('numeroParcelas', parseInt(e.target.value) || 1)}
                 required
               />
+            </div>
+
+            <div>
+              <Label>Valor por Parcela</Label>
+              <div className="p-2 bg-gray-50 rounded border text-sm font-medium">
+                R$ {valorParcela.toFixed(2).replace('.', ',')}
+              </div>
             </div>
           </div>
 
@@ -260,7 +127,7 @@ export function RecurringBillForm({ onClose, editingId, onSuccess }: RecurringBi
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione uma categoria" />
                 </SelectTrigger>
-                <SelectContent className="max-h-60 overflow-y-auto">
+                <SelectContent>
                   {categorias.map(categoria => (
                     <SelectItem key={categoria} value={categoria}>
                       {categoria}
@@ -296,7 +163,7 @@ export function RecurringBillForm({ onClose, editingId, onSuccess }: RecurringBi
               id="descricao"
               value={formData.descricao}
               onChange={(e) => handleInputChange('descricao', e.target.value)}
-              placeholder="Informações adicionais sobre a conta"
+              placeholder="Informações adicionais sobre a dívida"
               rows={3}
             />
           </div>
@@ -335,7 +202,7 @@ export function RecurringBillForm({ onClose, editingId, onSuccess }: RecurringBi
             </Button>
             <Button type="submit" className="flex-1 whatsapp-green text-white">
               <Save className="w-4 h-4 mr-2" />
-              {editingId ? 'Atualizar' : 'Salvar'}
+              Criar Parcelas
             </Button>
           </div>
         </form>

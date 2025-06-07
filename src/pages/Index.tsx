@@ -5,8 +5,12 @@ import { ChatInterface } from "@/components/ChatInterface";
 import { Settings } from "@/components/Settings";
 import { RecurringBills } from "@/components/RecurringBills";
 import UserProfile from "@/components/UserProfile";
+import { useAlerts } from "@/hooks/useAlerts";
 
 const Index = () => {
+  // Inicializar sistema de alertas
+  useAlerts();
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Tabs defaultValue="dashboard" className="w-full flex flex-col h-screen">
