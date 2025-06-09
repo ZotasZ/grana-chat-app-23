@@ -17,7 +17,7 @@ const AuthPage = () => {
               <Shield className="w-8 h-8 text-blue-600" />
             </div>
             <CardTitle className="text-2xl font-bold text-gray-900">
-              Login Seguro
+              ZotaZap - Login Seguro
             </CardTitle>
             <CardDescription className="text-gray-600">
               Acesso protegido com autenticação Google OAuth 2.0
@@ -55,7 +55,7 @@ const AuthPage = () => {
               </div>
               <div className="flex items-center space-x-2">
                 <Database className="w-4 h-4 text-green-600" />
-                <span>Dados criptografados no banco</span>
+                <span>Dados criptografados no Supabase</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Eye className="w-4 h-4 text-green-600" />
@@ -63,7 +63,7 @@ const AuthPage = () => {
               </div>
               <div className="flex items-center space-x-2">
                 <Shield className="w-4 h-4 text-green-600" />
-                <span>Senhas nunca armazenadas</span>
+                <span>Row Level Security ativo</span>
               </div>
             </div>
 

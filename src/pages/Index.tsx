@@ -6,10 +6,23 @@ import { Settings } from "@/components/Settings";
 import { RecurringBills } from "@/components/RecurringBills";
 import UserProfile from "@/components/UserProfile";
 import { useAlerts } from "@/hooks/useAlerts";
+import { useRecurringBillsStore } from "@/stores/recurringBillsStore";
+import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
 
 const Index = () => {
+  const { user } = useAuth();
+  const { fetchBills } = useRecurringBillsStore();
+  
   // Inicializar sistema de alertas
   useAlerts();
+
+  // Buscar dados do usuário quando logado
+  useEffect(() => {
+    if (user) {
+      fetchBills();
+    }
+  }, [user, fetchBills]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

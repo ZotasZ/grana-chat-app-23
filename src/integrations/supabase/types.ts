@@ -69,6 +69,114 @@ export type Database = {
         }
         Relationships: []
       }
+      recurring_bills: {
+        Row: {
+          alerta_dia_vencimento: boolean | null
+          alerta_um_dia: boolean | null
+          ativo: boolean
+          categoria: string
+          created_at: string
+          criado_em: string
+          data_vencimento: number
+          descricao: string | null
+          eh_parcelado: boolean | null
+          grupo_parcela_id: string | null
+          id: string
+          imagem_boleto: string | null
+          nome: string
+          numero_parcelas: number | null
+          parcela_atual: number | null
+          proximo_vencimento: string
+          status_pagamento: string | null
+          updated_at: string
+          user_id: string
+          valor: number
+          valor_total: number | null
+        }
+        Insert: {
+          alerta_dia_vencimento?: boolean | null
+          alerta_um_dia?: boolean | null
+          ativo?: boolean
+          categoria: string
+          created_at?: string
+          criado_em?: string
+          data_vencimento: number
+          descricao?: string | null
+          eh_parcelado?: boolean | null
+          grupo_parcela_id?: string | null
+          id?: string
+          imagem_boleto?: string | null
+          nome: string
+          numero_parcelas?: number | null
+          parcela_atual?: number | null
+          proximo_vencimento: string
+          status_pagamento?: string | null
+          updated_at?: string
+          user_id: string
+          valor: number
+          valor_total?: number | null
+        }
+        Update: {
+          alerta_dia_vencimento?: boolean | null
+          alerta_um_dia?: boolean | null
+          ativo?: boolean
+          categoria?: string
+          created_at?: string
+          criado_em?: string
+          data_vencimento?: number
+          descricao?: string | null
+          eh_parcelado?: boolean | null
+          grupo_parcela_id?: string | null
+          id?: string
+          imagem_boleto?: string | null
+          nome?: string
+          numero_parcelas?: number | null
+          parcela_atual?: number | null
+          proximo_vencimento?: string
+          status_pagamento?: string | null
+          updated_at?: string
+          user_id?: string
+          valor?: number
+          valor_total?: number | null
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          date: string
+          description: string
+          id: string
+          payment_method: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          date: string
+          description: string
+          id?: string
+          payment_method: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          payment_method?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

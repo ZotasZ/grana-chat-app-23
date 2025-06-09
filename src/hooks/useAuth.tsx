@@ -1,7 +1,8 @@
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AuthContextType {
   user: User | null;
@@ -28,54 +29,119 @@ interface AuthProviderProps {
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const { toast } = useToast();
-  
-  // Usuário mock simplificado para desenvolvimento
-  const mockUser = {
-    id: 'dev-user-123',
-    email: 'dev@example.com',
-    user_metadata: { name: 'Usuário Desenvolvimento' },
-    app_metadata: {},
-    aud: 'authenticated',
-    created_at: new Date().toISOString(),
-    confirmed_at: new Date().toISOString(),
-    email_confirmed_at: new Date().toISOString(),
-    phone: '',
-    last_sign_in_at: new Date().toISOString(),
-    role: 'authenticated',
-    updated_at: new Date().toISOString()
-  } as User;
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const mockSession = {
-    user: mockUser,
-    access_token: 'mock-token',
-    refresh_token: 'mock-refresh',
-    expires_in: 3600,
-    token_type: 'bearer',
-    expires_at: Date.now() + 3600000
-  } as Session;
+  useEffect(() => {
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email);
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
 
-  const [user] = useState<User | null>(mockUser);
-  const [session] = useState<Session | null>(mockSession);
-  const [loading] = useState(false);
+        if (event === 'SIGNED_IN' && session?.user) {
+          toast({
+            title: "Login realizado com sucesso!",
+            description: `Bem-vindo, ${session.user.user_metadata?.full_name || session.user.email}!`,
+          });
+        }
+        
+        if (event === 'SIGNED_OUT') {
+          toast({
+            title: "Logout realizado",
+            description: "Você foi desconectado com segurança.",
+          });
+        }
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [toast]);
 
   const signInWithGoogle = async () => {
-    console.log('🔧 Login simulado - funcionalidade desabilitada em desenvolvimento');
-    toast({
-      title: "Modo desenvolvimento",
-      description: "Sistema de login desabilitado temporariamente.",
-    });
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`
+        }
+      });
+
+      if (error) {
+        console.error('Error signing in with Google:', error);
+        toast({
+          title: "Erro no login",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error signing in with Google:', error);
+      toast({
+        title: "Erro no login",
+        description: "Ocorreu um erro ao tentar fazer login com Google.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const signOut = async () => {
-    console.log('🔧 Logout simulado - funcionalidade desabilitada em desenvolvimento');
-    toast({
-      title: "Modo desenvolvimento",
-      description: "Sistema de logout desabilitado temporariamente.",
-    });
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Error signing out:', error);
+        toast({
+          title: "Erro no logout",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast({
+        title: "Erro no logout",
+        description: "Ocorreu um erro ao tentar fazer logout.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const logActivity = async (action: string, resource?: string, details?: any) => {
-    console.log('📝 Activity logged:', { action, resource, details });
+    if (!user) return;
+
+    try {
+      const { error } = await supabase.from('audit_logs').insert({
+        user_id: user.id,
+        action,
+        resource,
+        details,
+        ip_address: null, // Poderia ser obtido via API externa se necessário
+        user_agent: navigator.userAgent
+      });
+
+      if (error) {
+        console.error('Error logging activity:', error);
+      }
+    } catch (error) {
+      console.error('Error logging activity:', error);
+    }
   };
 
   const value = {
