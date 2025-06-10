@@ -13,14 +13,18 @@ const AuthPage = () => {
       <div className="w-full max-w-md space-y-6">
         <Card className="shadow-xl border-0">
           <CardHeader className="text-center space-y-4">
-            <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-              <Shield className="w-8 h-8 text-blue-600" />
+            <div className="mx-auto w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-lg">
+              <img 
+                src="/lovable-uploads/b294f686-9842-4bdf-9bdd-3f0252e30686.png" 
+                alt="FinControl Logo" 
+                className="w-16 h-16 object-contain"
+              />
             </div>
             <CardTitle className="text-2xl font-bold text-gray-900">
-              ZotaZap - Login Seguro
+              FinControl
             </CardTitle>
             <CardDescription className="text-gray-600">
-              Acesso protegido com autenticação Google OAuth 2.0
+              Sistema de Controle Financeiro Pessoal
             </CardDescription>
           </CardHeader>
           

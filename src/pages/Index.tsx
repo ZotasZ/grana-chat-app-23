@@ -5,6 +5,7 @@ import { ChatInterface } from "@/components/ChatInterface";
 import { Settings } from "@/components/Settings";
 import { RecurringBills } from "@/components/RecurringBills";
 import UserProfile from "@/components/UserProfile";
+import Header from "@/components/Header";
 import { useAlerts } from "@/hooks/useAlerts";
 import { useRecurringBillsStore } from "@/stores/recurringBillsStore";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,9 +27,10 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Tabs defaultValue="dashboard" className="w-full flex flex-col h-screen">
+      <Header />
+      <Tabs defaultValue="dashboard" className="w-full flex flex-col flex-1">
         {/* Header fixo com as abas - otimizado para mobile */}
-        <div className="bg-card border-b border-border px-2 py-2 shadow-sm sticky top-0 z-50">
+        <div className="bg-card border-b border-border px-2 py-2 shadow-sm sticky top-[60px] z-40">
           <TabsList className="grid w-full grid-cols-5 h-12 bg-muted rounded-lg p-1">
             <TabsTrigger 
               value="dashboard" 
