@@ -98,51 +98,6 @@
     @apply bg-green-500 hover:bg-green-600;
   }
 
-  .whatsapp-dark {
-    background-color: #075e54;
-  }
-
-  .whatsapp-bg {
-    background-color: #e5ddd5;
-  }
-
-  .whatsapp-bubble-user {
-    background-color: #dcf8c6;
-  }
-
-  .whatsapp-bubble-bot {
-    background-color: #ffffff;
-  }
-
-  /* WhatsApp specific animations */
-  .whatsapp-message-enter {
-    animation: whatsappSlideIn 0.3s ease-out;
-  }
-
-  .whatsapp-typing {
-    animation: whatsappPulse 1.5s ease-in-out infinite;
-  }
-
-  @keyframes whatsappSlideIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px) scale(0.95);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-  }
-
-  @keyframes whatsappPulse {
-    0%, 100% {
-      opacity: 0.5;
-    }
-    50% {
-      opacity: 1;
-    }
-  }
-
   .animate-fadeIn {
     animation: fadeIn 0.3s ease-in-out;
   }
@@ -189,12 +144,6 @@
       min-height: 44px;
       min-width: 44px;
     }
-
-    /* WhatsApp responsive adjustments */
-    .whatsapp-interface {
-      max-width: 100vw;
-      height: 100vh;
-    }
   }
 }
 
@@ -214,14 +163,4 @@ img {
 
 .tab-content {
   @apply gpu-accelerated;
-}
-
-/* WhatsApp specific styles */
-.whatsapp-status-icons {
-  color: #4fc3f7;
-}
-
-.whatsapp-message-time {
-  color: #999;
-  font-size: 11px;
 }
