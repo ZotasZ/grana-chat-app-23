@@ -1,18 +1,11 @@
-
-import React, { useState, useRef, useEffect } from 'react';
-import { Send, MessageCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { MessageCircle, Smartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useTransactionStore } from '@/stores/transactionStore';
-import { useChatMessages } from '@/hooks/useChatMessages';
-import { useOCR } from '@/hooks/useOCR';
-import { ChatMessage } from '@/components/ChatMessage';
-import { TypingIndicator } from '@/components/TypingIndicator';
-import { ImageUpload } from '@/components/ImageUpload';
-import { PaymentValidationAlert } from '@/components/PaymentValidationAlert';
-import { createReceiptAnalysisMessage, formatReceiptSuggestion } from '@/utils/receiptFormatter';
+import { WhatsAppInterface } from '@/components/WhatsAppInterface';
 
 export function ChatInterface() {
+  const [viewMode, setViewMode] = useState<'chat' | 'whatsapp'>('chat');
+
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [lastValidation, setLastValidation] = useState<any>(null);
@@ -120,8 +113,60 @@ export function ChatInterface() {
     }
   };
 
+  if (viewMode === 'whatsapp') {
+    return (
+      <div className="flex flex-col h-full">
+        {/* Mode Toggle */}
+        <div className="p-4 bg-white border-b flex justify-center gap-2">
+          <Button
+            variant={viewMode === 'chat' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('chat')}
+            className="flex items-center gap-2"
+          >
+            <MessageCircle className="w-4 h-4" />
+            Chat Normal
+          </Button>
+          <Button
+            variant={viewMode === 'whatsapp' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('whatsapp')}
+            className="flex items-center gap-2 bg-[#075e54] hover:bg-[#064e46] text-white"
+          >
+            <Smartphone className="w-4 h-4" />
+            Modo WhatsApp
+          </Button>
+        </div>
+
+        <WhatsAppInterface />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full bg-gray-50">
+      {/* Mode Toggle */}
+      <div className="p-4 bg-white border-b flex justify-center gap-2">
+        <Button
+          variant={viewMode === 'chat' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setViewMode('chat')}
+          className="flex items-center gap-2"
+        >
+          <MessageCircle className="w-4 h-4" />
+          Chat Normal
+        </Button>
+        <Button
+          variant={viewMode === 'whatsapp' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setViewMode('whatsapp')}
+          className="flex items-center gap-2 bg-[#075e54] hover:bg-[#064e46] text-white"
+        >
+          <Smartphone className="w-4 h-4" />
+          Modo WhatsApp
+        </Button>
+      </div>
+
       {/* Header */}
       <div className="whatsapp-dark text-white p-4 shadow-lg">
         <div className="flex items-center gap-3">
@@ -147,6 +192,7 @@ export function ChatInterface() {
               <p>• "uber 15 pix"</p>
               <p>• "tênis 200 cartão crédito 2x"</p>
               <p>• 📷 Ou envie foto do comprovante!</p>
+              <p className="text-[#075e54] font-medium mt-3">💡 Experimente o Modo WhatsApp!</p>
             </div>
           </div>
         )}
