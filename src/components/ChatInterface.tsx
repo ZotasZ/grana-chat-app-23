@@ -1,7 +1,17 @@
-import React, { useState } from 'react';
-import { MessageCircle, Smartphone } from 'lucide-react';
+
+import React, { useState, useRef, useEffect } from 'react';
+import { MessageCircle, Smartphone, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { WhatsAppInterface } from '@/components/WhatsAppInterface';
+import { ChatMessage } from '@/components/ChatMessage';
+import { TypingIndicator } from '@/components/TypingIndicator';
+import { ImageUpload } from '@/components/ImageUpload';
+import { PaymentValidationAlert } from '@/components/PaymentValidationAlert';
+import { useTransactionStore } from '@/stores/transactionStore';
+import { useChatMessages } from '@/hooks/useChatMessages';
+import { useOCR } from '@/hooks/useOCR';
+import { formatReceiptSuggestion, createReceiptAnalysisMessage } from '@/utils/receiptFormatter';
 
 export function ChatInterface() {
   const [viewMode, setViewMode] = useState<'chat' | 'whatsapp'>('chat');
