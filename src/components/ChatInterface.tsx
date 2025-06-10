@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, Smartphone, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,8 +12,10 @@ import { useChatMessages } from '@/hooks/useChatMessages';
 import { useOCR } from '@/hooks/useOCR';
 import { formatReceiptSuggestion, createReceiptAnalysisMessage } from '@/utils/receiptFormatter';
 
+type ViewMode = 'chat' | 'whatsapp';
+
 export function ChatInterface() {
-  const [viewMode, setViewMode] = useState<'chat' | 'whatsapp'>('chat');
+  const [viewMode, setViewMode] = useState<ViewMode>('chat');
 
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
