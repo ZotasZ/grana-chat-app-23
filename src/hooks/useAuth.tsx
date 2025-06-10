@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -68,7 +68,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return () => subscription.unsubscribe();
   }, [toast]);
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = useCallback(async () => {
     try {
       setLoading(true);
       const { error } = await supabase.auth.signInWithOAuth({
@@ -96,9 +96,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     try {
       setLoading(true);
       const { error } = await supabase.auth.signOut();
@@ -121,9 +121,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const logActivity = async (action: string, resource?: string, details?: any) => {
+  const logActivity = useCallback(async (action: string, resource?: string, details?: any) => {
     if (!user) return;
 
     try {
@@ -132,7 +132,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         action,
         resource,
         details,
-        ip_address: null, // Poderia ser obtido via API externa se necessário
+        ip_address: null,
         user_agent: navigator.userAgent
       });
 
@@ -142,7 +142,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } catch (error) {
       console.error('Error logging activity:', error);
     }
-  };
+  }, [user]);
 
   const value = {
     user,
