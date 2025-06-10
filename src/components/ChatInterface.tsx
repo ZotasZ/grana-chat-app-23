@@ -124,6 +124,10 @@ export function ChatInterface() {
     }
   };
 
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode);
+  };
+
   if (viewMode === 'whatsapp') {
     return (
       <div className="flex flex-col h-full">
@@ -132,7 +136,7 @@ export function ChatInterface() {
           <Button
             variant={viewMode === 'chat' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setViewMode('chat')}
+            onClick={() => handleViewModeChange('chat')}
             className="flex items-center gap-2"
           >
             <MessageCircle className="w-4 h-4" />
@@ -141,7 +145,7 @@ export function ChatInterface() {
           <Button
             variant={viewMode === 'whatsapp' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setViewMode('whatsapp')}
+            onClick={() => handleViewModeChange('whatsapp')}
             className="flex items-center gap-2 bg-[#075e54] hover:bg-[#064e46] text-white"
           >
             <Smartphone className="w-4 h-4" />
@@ -161,7 +165,7 @@ export function ChatInterface() {
         <Button
           variant={viewMode === 'chat' ? 'default' : 'outline'}
           size="sm"
-          onClick={() => setViewMode('chat')}
+          onClick={() => handleViewModeChange('chat')}
           className="flex items-center gap-2"
         >
           <MessageCircle className="w-4 h-4" />
@@ -170,7 +174,7 @@ export function ChatInterface() {
         <Button
           variant={viewMode === 'whatsapp' ? 'default' : 'outline'}
           size="sm"
-          onClick={() => setViewMode('whatsapp')}
+          onClick={() => handleViewModeChange('whatsapp')}
           className="flex items-center gap-2 bg-[#075e54] hover:bg-[#064e46] text-white"
         >
           <Smartphone className="w-4 h-4" />
