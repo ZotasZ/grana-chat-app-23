@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, Smartphone, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -77,7 +76,7 @@ export function ChatInterface() {
     console.log('📸 Imagem selecionada:', file.name);
     
     addMessage({
-      tipo: 'user',
+      tipo: 'user' as const,
       conteudo: `📷 Enviou comprovante: ${file.name}`,
       timestamp: new Date(),
     });
