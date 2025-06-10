@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, Smartphone, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,7 +17,6 @@ type ViewMode = 'chat' | 'whatsapp';
 
 export function ChatInterface() {
   const [viewMode, setViewMode] = useState<ViewMode>('chat');
-
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [lastValidation, setLastValidation] = useState<any>(null);
