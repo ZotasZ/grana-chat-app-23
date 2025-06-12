@@ -3,6 +3,9 @@ import { createContext, useContext, useState, useEffect, ReactNode, useCallback 
 import { User, Session } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { App } from '@capacitor/app';
+import { Browser } from '@capacitor/browser';
+import { Capacitor } from '@capacitor/core';
 
 interface AuthContextType {
   user: User | null;
@@ -65,26 +68,87 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    // Handle deep links for mobile OAuth
+    if (Capacitor.isNativePlatform()) {
+      App.addListener('appUrlOpen', async (data) => {
+        console.log('App opened with URL:', data.url);
+        
+        // Handle Supabase auth callback
+        if (data.url.includes('#access_token') || data.url.includes('?access_token')) {
+          const url = new URL(data.url);
+          const fragment = url.hash || url.search;
+          
+          try {
+            const { data: authData, error } = await supabase.auth.getSessionFromUrl(data.url);
+            if (error) {
+              console.error('Error processing auth callback:', error);
+              toast({
+                title: "Erro no login",
+                description: "Erro ao processar autenticação.",
+                variant: "destructive",
+              });
+            }
+          } catch (error) {
+            console.error('Error handling auth URL:', error);
+          }
+        }
+      });
+    }
+
+    return () => {
+      subscription.unsubscribe();
+      if (Capacitor.isNativePlatform()) {
+        App.removeAllListeners();
+      }
+    };
   }, [toast]);
 
   const signInWithGoogle = useCallback(async () => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/`
-        }
-      });
-
-      if (error) {
-        console.error('Error signing in with Google:', error);
-        toast({
-          title: "Erro no login",
-          description: error.message,
-          variant: "destructive",
+      
+      // Para mobile, usamos o Browser para abrir o OAuth
+      if (Capacitor.isNativePlatform()) {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: 'com.fincontrol.app://callback'
+          }
         });
+
+        if (error) {
+          console.error('Error starting OAuth flow:', error);
+          toast({
+            title: "Erro no login",
+            description: error.message,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (data.url) {
+          await Browser.open({ 
+            url: data.url,
+            windowName: '_self'
+          });
+        }
+      } else {
+        // Para web, usa o fluxo normal
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: `${window.location.origin}/`
+          }
+        });
+
+        if (error) {
+          console.error('Error signing in with Google:', error);
+          toast({
+            title: "Erro no login",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
       }
     } catch (error) {
       console.error('Error signing in with Google:', error);

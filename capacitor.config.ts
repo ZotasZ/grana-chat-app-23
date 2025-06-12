@@ -18,6 +18,12 @@ const config: CapacitorConfig = {
     StatusBar: {
       style: 'LIGHT_CONTENT',
       backgroundColor: "#22c55e"
+    },
+    App: {
+      appUrlOpen: {
+        iosCustomScheme: "com.fincontrol.app",
+        androidCustomScheme: "com.fincontrol.app"
+      }
     }
   }
 };
