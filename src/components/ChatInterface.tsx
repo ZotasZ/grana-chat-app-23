@@ -123,10 +123,10 @@ export function ChatInterface() {
   return (
     <div className="flex flex-col h-full bg-gray-50">
       {/* Header */}
-      <div className="whatsapp-dark text-white p-4 shadow-lg">
+      <div className="bg-green-600 text-white p-4 shadow-lg">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-            <MessageCircle className="w-6 h-6 text-[var(--whatsapp-dark)]" />
+            <MessageCircle className="w-6 h-6 text-green-600" />
           </div>
           <div>
             <h1 className="font-bold text-lg">Assistente Financeiro</h1>
@@ -187,13 +187,13 @@ export function ChatInterface() {
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Digite seu gasto ou envie comprovante..."
-            className="flex-1 border-gray-300 focus:border-[var(--whatsapp-green)]"
+            className="flex-1 border-gray-300 focus:border-green-500"
             disabled={isProcessingImage}
           />
           <Button
             onClick={handleSendMessage}
             disabled={!inputMessage.trim() || isProcessingImage}
-            className="whatsapp-green hover:bg-green-600 text-white px-6"
+            className="bg-green-500 hover:bg-green-600 text-white px-6"
           >
             <Send className="w-4 h-4" />
           </Button>
