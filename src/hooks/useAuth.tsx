@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
@@ -34,12 +33,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Variables to store Capacitor modules
     let App: any = null;
     let Browser: any = null;
     let Capacitor: any = null;
 
-    // Function to initialize Capacitor modules
     const initializeCapacitor = async () => {
       try {
         const capacitorCore = await import('@capacitor/core');
@@ -50,63 +47,118 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           const capacitorBrowser = await import('@capacitor/browser');
           App = capacitorApp.App;
           Browser = capacitorBrowser.Browser;
+          console.log('Capacitor módulos inicializados para plataforma nativa');
         }
       } catch (error) {
         console.log('Capacitor não disponível, executando no modo web');
       }
     };
 
-    // Initialize Capacitor and set up auth
     const setupAuth = async () => {
       await initializeCapacitor();
 
-      // Set up auth state listener
+      // Configurar listener de mudança de estado de auth
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        (event, session) => {
+        async (event, session) => {
           console.log('Auth state changed:', event, session?.user?.email);
           setSession(session);
           setUser(session?.user ?? null);
           setLoading(false);
 
           if (event === 'SIGNED_IN' && session?.user) {
+            console.log('Usuário logado com sucesso:', session.user.email);
             toast({
               title: "Login realizado com sucesso!",
               description: `Bem-vindo, ${session.user.user_metadata?.full_name || session.user.email}!`,
             });
+
+            // Fechar browser se estiver em plataforma nativa
+            if (Capacitor && Capacitor.isNativePlatform() && Browser) {
+              try {
+                await Browser.close();
+                console.log('Browser fechado após login');
+              } catch (error) {
+                console.log('Erro ao fechar browser:', error);
+              }
+            }
           }
           
           if (event === 'SIGNED_OUT') {
+            console.log('Usuário deslogado');
             toast({
               title: "Logout realizado",
               description: "Você foi desconectado com segurança.",
             });
           }
+          
+          // Para mobile, tratar casos específicos de auth
+          if (event === 'TOKEN_REFRESHED') {
+            console.log('Token renovado');
+          }
         }
       );
 
-      // Check for existing session
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+      // Verificar sessão existente
+      try {
+        const { data: { session: existingSession }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Erro ao obter sessão:', error);
+        } else {
+          console.log('Sessão existente:', existingSession?.user?.email || 'Nenhuma');
+          setSession(existingSession);
+          setUser(existingSession?.user ?? null);
+        }
+      } catch (error) {
+        console.error('Erro ao verificar sessão existente:', error);
+      } finally {
         setLoading(false);
-      });
+      }
 
-      // Handle deep links for mobile OAuth
+      // Configurar deep links para mobile OAuth
       if (Capacitor && Capacitor.isNativePlatform() && App) {
-        App.addListener('appUrlOpen', async (data: any) => {
-          console.log('App opened with URL:', data.url);
+        const handleAppUrlOpen = async (data: any) => {
+          console.log('App aberto com URL:', data.url);
           
-          // Handle Supabase auth callback
           if (data.url.includes('#access_token') || data.url.includes('?access_token')) {
             try {
-              // For mobile, we just log the URL - the auth state change will handle the session
-              console.log('OAuth callback received:', data.url);
-              toast({
-                title: "Processando login",
-                description: "Finalizando autenticação...",
-              });
+              console.log('OAuth callback detectado, processando...');
+              
+              // Extrair o hash/query da URL
+              const url = new URL(data.url);
+              const hashParams = new URLSearchParams(url.hash.substring(1));
+              const queryParams = new URLSearchParams(url.search);
+              
+              const accessToken = hashParams.get('access_token') || queryParams.get('access_token');
+              const refreshToken = hashParams.get('refresh_token') || queryParams.get('refresh_token');
+              
+              if (accessToken) {
+                console.log('Tokens encontrados, definindo sessão...');
+                
+                // Definir a sessão com os tokens
+                const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+                  access_token: accessToken,
+                  refresh_token: refreshToken || ''
+                });
+                
+                if (sessionError) {
+                  console.error('Erro ao definir sessão:', sessionError);
+                  toast({
+                    title: "Erro no login",
+                    description: "Erro ao processar autenticação.",
+                    variant: "destructive",
+                  });
+                } else {
+                  console.log('Sessão definida com sucesso:', sessionData.user?.email);
+                }
+              }
+              
+              // Fechar o browser
+              if (Browser) {
+                await Browser.close();
+              }
+              
             } catch (error) {
-              console.error('Error handling auth URL:', error);
+              console.error('Erro ao processar URL de auth:', error);
               toast({
                 title: "Erro no login",
                 description: "Erro ao processar autenticação.",
@@ -114,14 +166,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
               });
             }
           }
-        });
+        };
+
+        App.addListener('appUrlOpen', handleAppUrlOpen);
+        
+        return () => {
+          subscription.unsubscribe();
+          App.removeAllListeners();
+        };
       }
 
       return () => {
         subscription.unsubscribe();
-        if (Capacitor && Capacitor.isNativePlatform() && App) {
-          App.removeAllListeners();
-        }
       };
     };
 
@@ -131,8 +187,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signInWithGoogle = useCallback(async () => {
     try {
       setLoading(true);
+      console.log('Iniciando login com Google...');
       
-      // Check if we're on mobile by trying to import Capacitor
       let isNative = false;
       let Browser: any = null;
       
@@ -144,22 +200,28 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (isNative) {
           const capacitorBrowser = await import('@capacitor/browser');
           Browser = capacitorBrowser.Browser;
+          console.log('Plataforma nativa detectada');
         }
       } catch (error) {
         console.log('Capacitor não disponível, usando modo web');
       }
       
-      // Para mobile, usamos o Browser para abrir o OAuth
       if (isNative && Browser) {
+        console.log('Iniciando OAuth para mobile...');
+        
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
-            redirectTo: 'com.fincontrol.app://callback'
+            redirectTo: 'com.fincontrol.app://callback',
+            queryParams: {
+              access_type: 'offline',
+              prompt: 'consent',
+            }
           }
         });
 
         if (error) {
-          console.error('Error starting OAuth flow:', error);
+          console.error('Erro ao iniciar fluxo OAuth:', error);
           toast({
             title: "Erro no login",
             description: error.message,
@@ -169,13 +231,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
 
         if (data.url) {
+          console.log('Abrindo URL OAuth:', data.url);
           await Browser.open({
             url: data.url,
             windowName: '_self'
           });
         }
       } else {
-        // Para web, usa o fluxo normal
+        console.log('Iniciando OAuth para web...');
         const { error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
@@ -184,7 +247,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         });
 
         if (error) {
-          console.error('Error signing in with Google:', error);
+          console.error('Erro ao fazer login com Google:', error);
           toast({
             title: "Erro no login",
             description: error.message,
@@ -193,7 +256,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
       }
     } catch (error) {
-      console.error('Error signing in with Google:', error);
+      console.error('Erro ao fazer login com Google:', error);
       toast({
         title: "Erro no login",
         description: "Ocorreu um erro ao tentar fazer login com Google.",
