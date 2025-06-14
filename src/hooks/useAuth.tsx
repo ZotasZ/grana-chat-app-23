@@ -92,17 +92,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         // Handle Supabase auth callback
         if (data.url.includes('#access_token') || data.url.includes('?access_token')) {
           try {
-            const { error } = await supabase.auth.getSessionFromUrl(data.url);
-            if (error) {
-              console.error('Error processing auth callback:', error);
-              toast({
-                title: "Erro no login",
-                description: "Erro ao processar autenticação.",
-                variant: "destructive",
-              });
-            }
+            // For mobile, we just log the URL - the auth state change will handle the session
+            console.log('OAuth callback received:', data.url);
+            toast({
+              title: "Processando login",
+              description: "Finalizando autenticação...",
+            });
           } catch (error) {
             console.error('Error handling auth URL:', error);
+            toast({
+              title: "Erro no login",
+              description: "Erro ao processar autenticação.",
+              variant: "destructive",
+            });
           }
         }
       });
