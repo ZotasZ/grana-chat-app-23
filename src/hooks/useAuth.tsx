@@ -4,6 +4,25 @@ import { User, Session } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
+// Importações condicionais do Capacitor
+let App: any = null;
+let Browser: any = null;
+let Capacitor: any = null;
+
+try {
+  const capacitorCore = await import('@capacitor/core');
+  Capacitor = capacitorCore.Capacitor;
+  
+  if (Capacitor.isNativePlatform()) {
+    const capacitorApp = await import('@capacitor/app');
+    const capacitorBrowser = await import('@capacitor/browser');
+    App = capacitorApp.App;
+    Browser = capacitorBrowser.Browser;
+  }
+} catch (error) {
+  console.log('Capacitor não disponível, executando no modo web');
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -65,8 +84,35 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setLoading(false);
     });
 
+    // Handle deep links for mobile OAuth
+    if (Capacitor && Capacitor.isNativePlatform() && App) {
+      App.addListener('appUrlOpen', async (data: any) => {
+        console.log('App opened with URL:', data.url);
+        
+        // Handle Supabase auth callback
+        if (data.url.includes('#access_token') || data.url.includes('?access_token')) {
+          try {
+            const { error } = await supabase.auth.getSessionFromUrl(data.url);
+            if (error) {
+              console.error('Error processing auth callback:', error);
+              toast({
+                title: "Erro no login",
+                description: "Erro ao processar autenticação.",
+                variant: "destructive",
+              });
+            }
+          } catch (error) {
+            console.error('Error handling auth URL:', error);
+          }
+        }
+      });
+    }
+
     return () => {
       subscription.unsubscribe();
+      if (Capacitor && Capacitor.isNativePlatform() && App) {
+        App.removeAllListeners();
+      }
     };
   }, [toast]);
 
@@ -74,20 +120,48 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       setLoading(true);
       
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/`
-        }
-      });
-
-      if (error) {
-        console.error('Error signing in with Google:', error);
-        toast({
-          title: "Erro no login",
-          description: error.message,
-          variant: "destructive",
+      // Para mobile, usamos o Browser para abrir o OAuth
+      if (Capacitor && Capacitor.isNativePlatform() && Browser) {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: 'com.fincontrol.app://callback'
+          }
         });
+
+        if (error) {
+          console.error('Error starting OAuth flow:', error);
+          toast({
+            title: "Erro no login",
+            description: error.message,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (data.url) {
+          await Browser.open({
+            url: data.url,
+            windowName: '_self'
+          });
+        }
+      } else {
+        // Para web, usa o fluxo normal
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: `${window.location.origin}/`
+          }
+        });
+
+        if (error) {
+          console.error('Error signing in with Google:', error);
+          toast({
+            title: "Erro no login",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
       }
     } catch (error) {
       console.error('Error signing in with Google:', error);

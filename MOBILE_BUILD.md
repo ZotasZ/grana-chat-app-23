@@ -1,57 +1,116 @@
 
-# Guia para Gerar APK - FinControl App
+# Guia Completo para Gerar APK - FinControl App
+
+## ⚠️ IMPORTANTE - Leia Primeiro!
+
+Este app está configurado para desenvolvimento com **hot-reload** durante o desenvolvimento. Para produção, você precisará fazer algumas alterações.
 
 ## Pré-requisitos
 
 1. **Node.js** instalado (versão 16 ou superior)
-2. **Android Studio** instalado
+2. **Android Studio** instalado e configurado
 3. **Java SDK** (JDK 11 ou superior)
+4. **Git** instalado
 
-## Passos para gerar o APK
+## 🚀 Passos para gerar o APK
 
-### 1. Instalar Capacitor (localmente)
+### Passo 1: Exportar o projeto do Lovable
+
+1. No Lovable, clique no botão **"Export to Github"** no canto superior direito
+2. Conecte sua conta GitHub se necessário
+3. Escolha um nome para o repositório
+4. Aguarde a exportação completar
+
+### Passo 2: Clonar o projeto localmente
 
 ```bash
-npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/app @capacitor/browser
+git clone https://github.com/SEU_USUARIO/SEU_REPOSITORIO.git
+cd SEU_REPOSITORIO
 ```
 
-### 2. Fazer build do projeto
+### Passo 3: Instalar dependências
+
+```bash
+npm install
+```
+
+### Passo 4: Configurar para produção
+
+Edite o arquivo `capacitor.config.ts` e **remova** a configuração de desenvolvimento:
+
+```typescript
+// REMOVA ou comente estas linhas:
+server: {
+  url: 'https://b9dbb900-963b-47f0-9ff6-8f2b654495ad.lovableproject.com?forceHideBadge=true',
+  cleartext: true
+},
+```
+
+O arquivo deve ficar assim:
+
+```typescript
+import { CapacitorConfig } from '@capacitor/cli';
+
+const config: CapacitorConfig = {
+  appId: 'com.fincontrol.app',
+  appName: 'FinControl',
+  webDir: 'dist',
+  bundledWebRuntime: false,
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 2000,
+      backgroundColor: "#22c55e",
+      showSpinner: false
+    },
+    StatusBar: {
+      style: 'LIGHT_CONTENT',
+      backgroundColor: "#22c55e"
+    },
+    App: {
+      appUrlOpen: {
+        iosCustomScheme: "com.fincontrol.app",
+        androidCustomScheme: "com.fincontrol.app"
+      }
+    }
+  }
+};
+
+export default config;
+```
+
+### Passo 5: Fazer build do projeto
 
 ```bash
 npm run build
 ```
 
-### 3. Inicializar Capacitor (se não feito ainda)
-
-```bash
-npx cap init
-```
-
-### 4. Adicionar plataforma Android
+### Passo 6: Adicionar plataforma Android
 
 ```bash
 npx cap add android
 ```
 
-### 5. Sincronizar arquivos
+### Passo 7: Sincronizar arquivos
 
 ```bash
 npx cap sync android
 ```
 
-### 6. Configurar OAuth no Supabase
+### Passo 8: Configurar OAuth no Supabase
 
-**IMPORTANTE**: Configure no Supabase Dashboard:
+**MUITO IMPORTANTE**: Configure no Supabase Dashboard:
 
-1. Vá em Authentication > URL Configuration
-2. Adicione em "Redirect URLs":
+1. Vá em **Authentication > URL Configuration**
+2. Adicione em **"Redirect URLs"**:
    - `com.fincontrol.app://callback`
-   - `https://seu-dominio.com/` (se tiver)
-3. Site URL: `https://seu-dominio.com`
+   - `https://seu-dominio.com/` (se tiver um domínio próprio)
+3. **Site URL**: `https://seu-dominio.com` ou `http://localhost:3000` para desenvolvimento
 
-### 7. Configurar Android para OAuth
+### Passo 9: Configurar Android para OAuth
 
-Edite `android/app/src/main/AndroidManifest.xml`:
+Edite o arquivo `android/app/src/main/AndroidManifest.xml`:
+
+Encontre a tag `<activity>` principal e adicione o intent-filter:
 
 ```xml
 <activity
@@ -65,7 +124,7 @@ Edite `android/app/src/main/AndroidManifest.xml`:
         <category android:name="android.intent.category.LAUNCHER" />
     </intent-filter>
     
-    <!-- Adicione este intent-filter para OAuth -->
+    <!-- ADICIONE ESTE INTENT-FILTER PARA OAUTH -->
     <intent-filter>
         <action android:name="android.intent.action.VIEW" />
         <category android:name="android.intent.category.DEFAULT" />
@@ -75,72 +134,77 @@ Edite `android/app/src/main/AndroidManifest.xml`:
 </activity>
 ```
 
-### 8. Abrir no Android Studio
+### Passo 10: Abrir no Android Studio
 
 ```bash
 npx cap open android
 ```
 
-### 9. Gerar APK no Android Studio
+### Passo 11: Gerar APK no Android Studio
 
-1. No Android Studio, vá em **Build > Build Bundle(s) / APK(s) > Build APK(s)**
-2. Aguarde a compilação
-3. O APK será gerado em `android/app/build/outputs/apk/debug/`
+1. No Android Studio, aguarde a sincronização do projeto
+2. Vá em **Build > Build Bundle(s) / APK(s) > Build APK(s)**
+3. Aguarde a compilação (pode demorar alguns minutos na primeira vez)
+4. O APK será gerado em `android/app/build/outputs/apk/debug/`
 
-## Para Google Play Store
+## 📱 Para Google Play Store (Produção)
 
 1. **Build > Generate Signed Bundle / APK**
 2. Escolha **Android App Bundle**
 3. Configure keystore (primeira vez) ou use existente
-4. Escolha release build
+4. Escolha **release** build
 5. O AAB será gerado para upload na Play Store
 
-## Troubleshooting OAuth
+## 🔧 Troubleshooting
 
-### Se o login não funcionar:
+### Se o login OAuth não funcionar:
 
-1. Verifique se as URLs estão corretas no Supabase
-2. Teste primeiro em modo debug
-3. Verifique logs no Android Studio: View > Tool Windows > Logcat
-4. Para iOS, também configure o URL scheme no Info.plist
+1. ✅ Verifique se as URLs estão corretas no Supabase
+2. ✅ Verifique se o `AndroidManifest.xml` foi modificado
+3. ✅ Teste primeiro em modo debug
+4. ✅ Verifique logs no Android Studio: **View > Tool Windows > Logcat**
 
-### Comandos úteis:
+### Comandos úteis para debugging:
 
 ```bash
 # Limpar e rebuild
 npx cap clean android
 npx cap sync android
 
-# Ver logs em tempo real
+# Ver logs em tempo real (requer dispositivo conectado)
 npx cap run android --livereload
 
-# Para iOS
-npx cap add ios
-npx cap sync ios
-npx cap open ios
+# Para testar no emulador
+npx cap run android
 ```
 
-## Configurações Importantes
+### Problemas comuns:
 
-- O app será instalado com o ID: `com.fincontrol.app`
-- Nome do app: "FinControl"
-- Tema verde para splash screen e status bar
-- Deep linking configurado para OAuth
+1. **"Build failed"**: Execute `npx cap clean android` e tente novamente
+2. **"OAuth não funciona"**: Verifique as URLs no Supabase
+3. **"App não abre"**: Verifique se o Java SDK está configurado corretamente
 
-## Distribuição
+## 📋 Checklist final:
+
+- [ ] Projeto exportado do Lovable
+- [ ] Dependências instaladas (`npm install`)
+- [ ] Configuração de produção no `capacitor.config.ts`
+- [ ] Build realizado (`npm run build`)
+- [ ] Plataforma Android adicionada
+- [ ] URLs configuradas no Supabase
+- [ ] AndroidManifest.xml modificado
+- [ ] APK gerado com sucesso
+
+## 🚀 Distribuição
 
 ### Android (Google Play):
-1. Gere AAB assinado
-2. Crie conta de desenvolvedor Google Play (taxa única $25)
-3. Faça upload do AAB
-4. Preencha informações da loja
-5. Submeta para revisão (1-3 dias)
+- Taxa única de $25 para conta de desenvolvedor
+- Processo de revisão: 1-3 dias
+- Formato AAB obrigatório
 
 ### iOS (App Store):
-1. Precisa de Mac com Xcode
-2. Conta Apple Developer ($99/ano)
-3. Configure certificados e provisioning profiles
-4. Archive e upload via Xcode
-5. Submeta para revisão (24-48 horas)
+- Requer Mac com Xcode
+- Conta Apple Developer: $99/ano
+- Processo de revisão: 24-48 horas
 
-**Nota**: Teste sempre em dispositivos físicos antes de submeter às lojas.
+**✅ Sempre teste em dispositivos físicos antes de submeter às lojas!**
