@@ -75,6 +75,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             // Fechar browser se estiver em plataforma nativa
             if (Capacitor && Capacitor.isNativePlatform() && Browser) {
               try {
+                console.log('Tentando fechar browser após login...');
                 await Browser.close();
                 console.log('Browser fechado após login');
               } catch (error) {
@@ -91,7 +92,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             });
           }
           
-          // Para mobile, tratar casos específicos de auth
           if (event === 'TOKEN_REFRESHED') {
             console.log('Token renovado');
           }
@@ -119,43 +119,39 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         const handleAppUrlOpen = async (data: any) => {
           console.log('App aberto com URL:', data.url);
           
-          if (data.url.includes('#access_token') || data.url.includes('?access_token')) {
+          if (data.url && (data.url.includes('#access_token') || data.url.includes('?access_token') || data.url.includes('callback'))) {
             try {
-              console.log('OAuth callback detectado, processando...');
+              console.log('OAuth callback detectado, processando...', data.url);
               
-              // Extrair o hash/query da URL
-              const url = new URL(data.url);
-              const hashParams = new URLSearchParams(url.hash.substring(1));
-              const queryParams = new URLSearchParams(url.search);
-              
-              const accessToken = hashParams.get('access_token') || queryParams.get('access_token');
-              const refreshToken = hashParams.get('refresh_token') || queryParams.get('refresh_token');
-              
-              if (accessToken) {
-                console.log('Tokens encontrados, definindo sessão...');
-                
-                // Definir a sessão com os tokens
-                const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-                  access_token: accessToken,
-                  refresh_token: refreshToken || ''
-                });
-                
-                if (sessionError) {
-                  console.error('Erro ao definir sessão:', sessionError);
-                  toast({
-                    title: "Erro no login",
-                    description: "Erro ao processar autenticação.",
-                    variant: "destructive",
-                  });
-                } else {
-                  console.log('Sessão definida com sucesso:', sessionData.user?.email);
+              // Fechar o browser imediatamente
+              if (Browser) {
+                try {
+                  await Browser.close();
+                  console.log('Browser fechado após callback');
+                } catch (error) {
+                  console.log('Erro ao fechar browser:', error);
                 }
               }
               
-              // Fechar o browser
-              if (Browser) {
-                await Browser.close();
-              }
+              // Aguardar um pouco para o callback ser processado
+              setTimeout(async () => {
+                try {
+                  console.log('Verificando sessão após callback...');
+                  const { data: callbackSession, error: sessionError } = await supabase.auth.getSession();
+                  
+                  if (sessionError) {
+                    console.error('Erro ao obter sessão após callback:', sessionError);
+                  } else if (callbackSession?.session) {
+                    console.log('Sessão encontrada após callback:', callbackSession.session.user?.email);
+                    setSession(callbackSession.session);
+                    setUser(callbackSession.session.user);
+                  } else {
+                    console.log('Nenhuma sessão encontrada após callback');
+                  }
+                } catch (error) {
+                  console.error('Erro ao processar callback:', error);
+                }
+              }, 1000);
               
             } catch (error) {
               console.error('Erro ao processar URL de auth:', error);
@@ -215,8 +211,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             redirectTo: 'com.fincontrol.app://callback',
             queryParams: {
               access_type: 'offline',
-              prompt: 'consent',
-            }
+              prompt: 'select_account',
+              hd: undefined
+            },
+            skipBrowserRedirect: false
           }
         });
 
@@ -232,10 +230,23 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
         if (data.url) {
           console.log('Abrindo URL OAuth:', data.url);
-          await Browser.open({
-            url: data.url,
-            windowName: '_self'
-          });
+          
+          try {
+            await Browser.open({
+              url: data.url,
+              windowName: '_blank',
+              toolbarColor: '#22c55e',
+              presentationStyle: 'popover'
+            });
+            console.log('Browser aberto com sucesso');
+          } catch (browserError) {
+            console.error('Erro ao abrir browser:', browserError);
+            toast({
+              title: "Erro no login",
+              description: "Não foi possível abrir o navegador",
+              variant: "destructive",
+            });
+          }
         }
       } else {
         console.log('Iniciando OAuth para web...');
