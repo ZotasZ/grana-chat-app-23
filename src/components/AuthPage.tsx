@@ -9,7 +9,7 @@ const AuthPage = () => {
   const { signInWithGoogle, loading } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4 z-50">
       <div className="w-full max-w-md space-y-6">
         <Card className="shadow-xl border-0">
           <CardHeader className="text-center space-y-4">
