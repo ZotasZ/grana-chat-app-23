@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
@@ -75,7 +76,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             // Fechar browser se estiver em plataforma nativa
             if (Capacitor && Capacitor.isNativePlatform() && Browser) {
               try {
-                console.log('Tentando fechar browser após login...');
+                console.log('Fechando browser após login bem-sucedido...');
                 await Browser.close();
                 console.log('Browser fechado após login');
               } catch (error) {
@@ -90,10 +91,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
               title: "Logout realizado",
               description: "Você foi desconectado com segurança.",
             });
-          }
-          
-          if (event === 'TOKEN_REFRESHED') {
-            console.log('Token renovado');
           }
         }
       );
@@ -114,53 +111,37 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setLoading(false);
       }
 
-      // Configurar deep links para mobile OAuth
+      // Configurar deep links para mobile OAuth - versão simplificada
       if (Capacitor && Capacitor.isNativePlatform() && App) {
         const handleAppUrlOpen = async (data: any) => {
           console.log('App aberto com URL:', data.url);
           
-          if (data.url && (data.url.includes('#access_token') || data.url.includes('?access_token') || data.url.includes('callback'))) {
-            try {
-              console.log('OAuth callback detectado, processando...', data.url);
-              
-              // Fechar o browser imediatamente
-              if (Browser) {
-                try {
-                  await Browser.close();
-                  console.log('Browser fechado após callback');
-                } catch (error) {
-                  console.log('Erro ao fechar browser:', error);
-                }
+          if (data.url && data.url.includes('callback')) {
+            console.log('OAuth callback detectado:', data.url);
+            
+            // Fechar o browser imediatamente
+            if (Browser) {
+              try {
+                await Browser.close();
+                console.log('Browser fechado após callback');
+              } catch (error) {
+                console.log('Erro ao fechar browser no callback:', error);
               }
-              
-              // Aguardar um pouco para o callback ser processado
-              setTimeout(async () => {
-                try {
-                  console.log('Verificando sessão após callback...');
-                  const { data: callbackSession, error: sessionError } = await supabase.auth.getSession();
-                  
-                  if (sessionError) {
-                    console.error('Erro ao obter sessão após callback:', sessionError);
-                  } else if (callbackSession?.session) {
-                    console.log('Sessão encontrada após callback:', callbackSession.session.user?.email);
-                    setSession(callbackSession.session);
-                    setUser(callbackSession.session.user);
-                  } else {
-                    console.log('Nenhuma sessão encontrada após callback');
-                  }
-                } catch (error) {
-                  console.error('Erro ao processar callback:', error);
-                }
-              }, 1000);
-              
-            } catch (error) {
-              console.error('Erro ao processar URL de auth:', error);
-              toast({
-                title: "Erro no login",
-                description: "Erro ao processar autenticação.",
-                variant: "destructive",
-              });
             }
+            
+            // Pequeno delay para processar o callback
+            setTimeout(async () => {
+              try {
+                const { data: callbackSession } = await supabase.auth.getSession();
+                if (callbackSession?.session) {
+                  console.log('Sessão obtida após callback:', callbackSession.session.user?.email);
+                  setSession(callbackSession.session);
+                  setUser(callbackSession.session.user);
+                }
+              } catch (error) {
+                console.error('Erro ao processar callback:', error);
+              }
+            }, 500);
           }
         };
 
@@ -203,23 +184,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
       
       if (isNative && Browser) {
-        console.log('Iniciando OAuth para mobile...');
+        console.log('Iniciando OAuth simplificado para mobile...');
         
+        // Configuração simplificada para mobile
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
             redirectTo: 'com.fincontrol.app://callback',
-            queryParams: {
-              access_type: 'offline',
-              prompt: 'consent',
-              hd: undefined
-            },
             skipBrowserRedirect: false
           }
         });
 
         if (error) {
-          console.error('Erro ao iniciar fluxo OAuth:', error);
+          console.error('Erro ao iniciar OAuth:', error);
           toast({
             title: "Erro no login",
             description: error.message,
@@ -229,37 +206,21 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
 
         if (data.url) {
-          console.log('Abrindo URL OAuth:', data.url);
+          console.log('Abrindo URL OAuth simplificada:', data.url);
           
           try {
+            // Configuração mais simples do browser
             await Browser.open({
               url: data.url,
-              windowName: '_self',
-              presentationStyle: 'fullscreen',
-              showTitle: false,
-              toolbarColor: '#22c55e'
+              windowName: '_self'
             });
-            console.log('Browser aberto com sucesso');
-            
-            // Timeout de segurança para fechar browser se não houver resposta
-            setTimeout(async () => {
-              try {
-                console.log('Timeout atingido, verificando se ainda precisamos fechar browser');
-                const { data: currentSession } = await supabase.auth.getSession();
-                if (!currentSession?.session) {
-                  console.log('Sem sessão após timeout, fechando browser');
-                  await Browser.close();
-                }
-              } catch (error) {
-                console.log('Erro no timeout:', error);
-              }
-            }, 60000); // 60 segundos timeout
+            console.log('Browser OAuth aberto');
             
           } catch (browserError) {
-            console.error('Erro ao abrir browser:', browserError);
+            console.error('Erro ao abrir browser OAuth:', browserError);
             toast({
               title: "Erro no login",
-              description: "Não foi possível abrir o navegador",
+              description: "Não foi possível abrir o navegador para autenticação",
               variant: "destructive",
             });
           }
@@ -274,7 +235,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         });
 
         if (error) {
-          console.error('Erro ao fazer login com Google:', error);
+          console.error('Erro no OAuth web:', error);
           toast({
             title: "Erro no login",
             description: error.message,
@@ -283,10 +244,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
       }
     } catch (error) {
-      console.error('Erro ao fazer login com Google:', error);
+      console.error('Erro geral no login:', error);
       toast({
         title: "Erro no login",
-        description: "Ocorreu um erro ao tentar fazer login com Google.",
+        description: "Ocorreu um erro inesperado ao tentar fazer login.",
         variant: "destructive",
       });
     } finally {
