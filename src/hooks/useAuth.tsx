@@ -48,10 +48,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           const capacitorBrowser = await import('@capacitor/browser');
           App = capacitorApp.App;
           Browser = capacitorBrowser.Browser;
-          console.log('Capacitor módulos inicializados para plataforma nativa');
+          console.log('Capacitor inicializado para plataforma nativa');
         }
       } catch (error) {
-        console.log('Capacitor não disponível, executando no modo web');
+        console.log('Capacitor não disponível, modo web');
       }
     };
 
@@ -67,16 +67,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           setLoading(false);
 
           if (event === 'SIGNED_IN' && session?.user) {
-            console.log('Usuário logado com sucesso:', session.user.email);
+            console.log('Login bem-sucedido:', session.user.email);
             toast({
               title: "Login realizado com sucesso!",
               description: `Bem-vindo, ${session.user.user_metadata?.full_name || session.user.email}!`,
             });
 
-            // Fechar browser se estiver em plataforma nativa
+            // Fechar browser se mobile
             if (Capacitor && Capacitor.isNativePlatform() && Browser) {
               try {
-                console.log('Fechando browser após login bem-sucedido...');
                 await Browser.close();
                 console.log('Browser fechado após login');
               } catch (error) {
@@ -106,42 +105,44 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           setUser(existingSession?.user ?? null);
         }
       } catch (error) {
-        console.error('Erro ao verificar sessão existente:', error);
+        console.error('Erro ao verificar sessão:', error);
       } finally {
         setLoading(false);
       }
 
-      // Configurar deep links para mobile OAuth - versão simplificada
+      // Deep links para mobile
       if (Capacitor && Capacitor.isNativePlatform() && App) {
         const handleAppUrlOpen = async (data: any) => {
-          console.log('App aberto com URL:', data.url);
+          console.log('App URL aberto:', data.url);
           
-          if (data.url && data.url.includes('callback')) {
-            console.log('OAuth callback detectado:', data.url);
+          if (data.url && data.url.includes('#access_token=')) {
+            console.log('Token detectado na URL, processando...');
             
-            // Fechar o browser imediatamente
+            // Fechar browser imediatamente
             if (Browser) {
               try {
                 await Browser.close();
-                console.log('Browser fechado após callback');
+                console.log('Browser fechado após detectar token');
               } catch (error) {
-                console.log('Erro ao fechar browser no callback:', error);
+                console.log('Erro ao fechar browser:', error);
               }
             }
             
-            // Pequeno delay para processar o callback
+            // Processar callback com delay
             setTimeout(async () => {
               try {
-                const { data: callbackSession } = await supabase.auth.getSession();
-                if (callbackSession?.session) {
-                  console.log('Sessão obtida após callback:', callbackSession.session.user?.email);
-                  setSession(callbackSession.session);
-                  setUser(callbackSession.session.user);
+                const { data: sessionData, error } = await supabase.auth.getSession();
+                if (error) {
+                  console.error('Erro ao obter sessão após callback:', error);
+                } else if (sessionData?.session) {
+                  console.log('Sessão atualizada após callback:', sessionData.session.user?.email);
+                  setSession(sessionData.session);
+                  setUser(sessionData.session.user);
                 }
               } catch (error) {
                 console.error('Erro ao processar callback:', error);
               }
-            }, 500);
+            }, 1000);
           }
         };
 
@@ -177,26 +178,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (isNative) {
           const capacitorBrowser = await import('@capacitor/browser');
           Browser = capacitorBrowser.Browser;
-          console.log('Plataforma nativa detectada');
         }
       } catch (error) {
-        console.log('Capacitor não disponível, usando modo web');
+        console.log('Capacitor não disponível');
       }
       
       if (isNative && Browser) {
-        console.log('Iniciando OAuth simplificado para mobile...');
+        console.log('Login mobile - usando approach direto');
         
-        // Configuração simplificada para mobile
+        // Para mobile, usar redirect direto sem popup
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
-            redirectTo: 'com.fincontrol.app://callback',
-            skipBrowserRedirect: false
+            redirectTo: 'com.fincontrol.app://callback'
           }
         });
 
         if (error) {
-          console.error('Erro ao iniciar OAuth:', error);
+          console.error('Erro OAuth mobile:', error);
           toast({
             title: "Erro no login",
             description: error.message,
@@ -206,27 +205,28 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
 
         if (data.url) {
-          console.log('Abrindo URL OAuth simplificada:', data.url);
+          console.log('Abrindo URL OAuth:', data.url);
           
           try {
-            // Configuração mais simples do browser
+            // Configuração simplificada do browser
             await Browser.open({
               url: data.url,
-              windowName: '_self'
+              windowName: '_system'
             });
-            console.log('Browser OAuth aberto');
+            
+            console.log('Browser OAuth aberto com sucesso');
             
           } catch (browserError) {
-            console.error('Erro ao abrir browser OAuth:', browserError);
+            console.error('Erro ao abrir browser:', browserError);
             toast({
               title: "Erro no login",
-              description: "Não foi possível abrir o navegador para autenticação",
+              description: "Não foi possível abrir o navegador",
               variant: "destructive",
             });
           }
         }
       } else {
-        console.log('Iniciando OAuth para web...');
+        console.log('Login web');
         const { error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
@@ -235,7 +235,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         });
 
         if (error) {
-          console.error('Erro no OAuth web:', error);
+          console.error('Erro OAuth web:', error);
           toast({
             title: "Erro no login",
             description: error.message,
@@ -247,7 +247,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       console.error('Erro geral no login:', error);
       toast({
         title: "Erro no login",
-        description: "Ocorreu um erro inesperado ao tentar fazer login.",
+        description: "Erro inesperado ao fazer login.",
         variant: "destructive",
       });
     } finally {
