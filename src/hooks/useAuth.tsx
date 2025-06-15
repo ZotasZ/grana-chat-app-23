@@ -211,7 +211,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             redirectTo: 'com.fincontrol.app://callback',
             queryParams: {
               access_type: 'offline',
-              prompt: 'select_account',
+              prompt: 'consent',
               hd: undefined
             },
             skipBrowserRedirect: false
@@ -234,11 +234,27 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           try {
             await Browser.open({
               url: data.url,
-              windowName: '_blank',
-              toolbarColor: '#22c55e',
-              presentationStyle: 'popover'
+              windowName: '_self',
+              presentationStyle: 'fullscreen',
+              showTitle: false,
+              toolbarColor: '#22c55e'
             });
             console.log('Browser aberto com sucesso');
+            
+            // Timeout de segurança para fechar browser se não houver resposta
+            setTimeout(async () => {
+              try {
+                console.log('Timeout atingido, verificando se ainda precisamos fechar browser');
+                const { data: currentSession } = await supabase.auth.getSession();
+                if (!currentSession?.session) {
+                  console.log('Sem sessão após timeout, fechando browser');
+                  await Browser.close();
+                }
+              } catch (error) {
+                console.log('Erro no timeout:', error);
+              }
+            }, 60000); // 60 segundos timeout
+            
           } catch (browserError) {
             console.error('Erro ao abrir browser:', browserError);
             toast({
