@@ -112,46 +112,50 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // Deep links para mobile
       if (Capacitor && Capacitor.isNativePlatform() && App) {
         const handleAppUrlOpen = async (data: any) => {
-          console.log('App URL aberto:', data.url);
-          
-          if (data.url && (data.url.includes('#access_token=') || data.url.includes('?access_token='))) {
+          console.log('App URL aberto (nova implementação):', data.url);
+          const urlStr = data.url;
+
+          if (urlStr && urlStr.includes('#access_token=')) {
             console.log('Token detectado na URL, processando...');
-            
-            // Fechar browser imediatamente
+
             if (Browser) {
               try {
                 await Browser.close();
-                console.log('Browser fechado após detectar token');
+                console.log('Browser fechado após detectar token.');
               } catch (error) {
-                console.log('Erro ao fechar browser:', error);
+                console.error('Erro ao fechar browser, pode já estar fechado.', error);
               }
             }
-            
-            // Processar callback
-            try {
-              // Extrair fragmento da URL
-              const url = new URL(data.url);
-              const fragment = url.hash.substring(1);
-              const params = new URLSearchParams(fragment);
-              
-              const accessToken = params.get('access_token');
-              const refreshToken = params.get('refresh_token');
-              
-              if (accessToken) {
-                console.log('Definindo sessão com tokens extraídos');
-                const { data: sessionData, error } = await supabase.auth.setSession({
-                  access_token: accessToken,
-                  refresh_token: refreshToken || ''
+
+            const hash = urlStr.substring(urlStr.indexOf('#') + 1);
+            const params = new URLSearchParams(hash);
+            const accessToken = params.get('access_token');
+            const refreshToken = params.get('refresh_token');
+
+            if (accessToken) {
+              console.log('Definindo sessão com tokens extraídos manualmente.');
+              const { data: sessionData, error } = await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken || '',
+              });
+
+              if (error) {
+                console.error('Erro ao definir sessão via setSession:', error);
+                toast({
+                  title: "Erro de Autenticação",
+                  description: `Não foi possível validar sua sessão: ${error.message}`,
+                  variant: "destructive",
                 });
-                
-                if (error) {
-                  console.error('Erro ao definir sessão:', error);
-                } else {
-                  console.log('Sessão definida com sucesso:', sessionData.user?.email);
-                }
+              } else {
+                console.log('Sessão definida com sucesso via setSession:', sessionData.user?.email);
               }
-            } catch (error) {
-              console.error('Erro ao processar callback:', error);
+            } else {
+              console.error('URL de callback recebida, mas access_token não encontrado.');
+              toast({
+                title: "Erro de Autenticação",
+                description: "A resposta do provedor de login é inválida.",
+                variant: "destructive",
+              });
             }
           }
         };
