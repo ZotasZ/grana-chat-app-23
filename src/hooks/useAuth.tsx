@@ -1,7 +1,10 @@
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+
+import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuthEffects } from './useAuthEffects';
+import { logActivity as logActivityUtil } from '@/lib/auth';
 
 interface AuthContextType {
   user: User | null;
@@ -32,149 +35,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    let App: any = null;
-    let Browser: any = null;
-    let Capacitor: any = null;
-
-    const initializeCapacitor = async () => {
-      try {
-        const capacitorCore = await import('@capacitor/core');
-        Capacitor = capacitorCore.Capacitor;
-        
-        if (Capacitor.isNativePlatform()) {
-          const capacitorApp = await import('@capacitor/app');
-          const capacitorBrowser = await import('@capacitor/browser');
-          App = capacitorApp.App;
-          Browser = capacitorBrowser.Browser;
-          console.log('Capacitor inicializado para plataforma nativa');
-        }
-      } catch (error) {
-        console.log('Capacitor não disponível, modo web');
-      }
-    };
-
-    const setupAuth = async () => {
-      await initializeCapacitor();
-
-      // Configurar listener de mudança de estado de auth
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        async (event, session) => {
-          console.log('Auth state changed:', event, session?.user?.email);
-          setSession(session);
-          setUser(session?.user ?? null);
-          setLoading(false);
-
-          if (event === 'SIGNED_IN' && session?.user) {
-            console.log('Login bem-sucedido:', session.user.email);
-            toast({
-              title: "Login realizado com sucesso!",
-              description: `Bem-vindo, ${session.user.user_metadata?.full_name || session.user.email}!`,
-            });
-
-            // Fechar browser se mobile
-            if (Capacitor && Capacitor.isNativePlatform() && Browser) {
-              try {
-                await Browser.close();
-                console.log('Browser fechado após login');
-              } catch (error) {
-                console.log('Erro ao fechar browser:', error);
-              }
-            }
-          }
-          
-          if (event === 'SIGNED_OUT') {
-            console.log('Usuário deslogado');
-            toast({
-              title: "Logout realizado",
-              description: "Você foi desconectado com segurança.",
-            });
-          }
-        }
-      );
-
-      // Verificar sessão existente
-      try {
-        const { data: { session: existingSession }, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error('Erro ao obter sessão:', error);
-        } else {
-          console.log('Sessão existente:', existingSession?.user?.email || 'Nenhuma');
-          setSession(existingSession);
-          setUser(existingSession?.user ?? null);
-        }
-      } catch (error) {
-        console.error('Erro ao verificar sessão:', error);
-      } finally {
-        setLoading(false);
-      }
-
-      // Deep links para mobile
-      if (Capacitor && Capacitor.isNativePlatform() && App) {
-        const handleAppUrlOpen = async (data: any) => {
-          console.log('App URL aberto (nova implementação):', data.url);
-          const urlStr = data.url;
-
-          if (urlStr && urlStr.includes('#access_token=')) {
-            console.log('Token detectado na URL, processando...');
-
-            if (Browser) {
-              try {
-                await Browser.close();
-                console.log('Browser fechado após detectar token.');
-              } catch (error) {
-                console.error('Erro ao fechar browser, pode já estar fechado.', error);
-              }
-            }
-
-            const hash = urlStr.substring(urlStr.indexOf('#') + 1);
-            const params = new URLSearchParams(hash);
-            const accessToken = params.get('access_token');
-            const refreshToken = params.get('refresh_token');
-
-            if (accessToken) {
-              console.log('Definindo sessão com tokens extraídos manualmente.');
-              const { data: sessionData, error } = await supabase.auth.setSession({
-                access_token: accessToken,
-                refresh_token: refreshToken || '',
-              });
-
-              if (error) {
-                console.error('Erro ao definir sessão via setSession:', error);
-                toast({
-                  title: "Erro de Autenticação",
-                  description: `Não foi possível validar sua sessão: ${error.message}`,
-                  variant: "destructive",
-                });
-              } else {
-                console.log('Sessão definida com sucesso via setSession:', sessionData.user?.email);
-              }
-            } else {
-              console.error('URL de callback recebida, mas access_token não encontrado.');
-              toast({
-                title: "Erro de Autenticação",
-                description: "A resposta do provedor de login é inválida.",
-                variant: "destructive",
-              });
-            }
-          }
-        };
-
-        App.addListener('appUrlOpen', handleAppUrlOpen);
-        
-        return () => {
-          subscription.unsubscribe();
-          App.removeAllListeners();
-        };
-      }
-
-      return () => {
-        subscription.unsubscribe();
-      };
-    };
-
-    setupAuth();
-  }, [toast]);
+  useAuthEffects({ setSession, setUser, setLoading, toast });
 
   const signInWithGoogle = useCallback(async () => {
     try {
@@ -225,7 +86,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           console.log('Abrindo URL OAuth:', data.url);
           
           try {
-            // Configuração otimizada do browser para mobile
             await Browser.open({
               url: data.url,
               windowName: '_system',
@@ -238,7 +98,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           } catch (browserError) {
             console.error('Erro ao abrir browser:', browserError);
             
-            // Fallback: tentar abrir no navegador padrão
             try {
               window.open(data.url, '_system');
               console.log('Fallback: URL aberta no navegador padrão');
@@ -312,24 +171,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, [toast]);
 
   const logActivity = useCallback(async (action: string, resource?: string, details?: any) => {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase.from('audit_logs').insert({
-        user_id: user.id,
-        action,
-        resource,
-        details,
-        ip_address: null,
-        user_agent: navigator.userAgent
-      });
-
-      if (error) {
-        console.error('Error logging activity:', error);
-      }
-    } catch (error) {
-      console.error('Error logging activity:', error);
-    }
+    await logActivityUtil(user, action, resource, details);
   }, [user]);
 
   const value = {
