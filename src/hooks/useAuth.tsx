@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
@@ -115,7 +114,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         const handleAppUrlOpen = async (data: any) => {
           console.log('App URL aberto:', data.url);
           
-          if (data.url && data.url.includes('#access_token=')) {
+          if (data.url && (data.url.includes('#access_token=') || data.url.includes('?access_token='))) {
             console.log('Token detectado na URL, processando...');
             
             // Fechar browser imediatamente
@@ -128,21 +127,32 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
               }
             }
             
-            // Processar callback com delay
-            setTimeout(async () => {
-              try {
-                const { data: sessionData, error } = await supabase.auth.getSession();
+            // Processar callback
+            try {
+              // Extrair fragmento da URL
+              const url = new URL(data.url);
+              const fragment = url.hash.substring(1);
+              const params = new URLSearchParams(fragment);
+              
+              const accessToken = params.get('access_token');
+              const refreshToken = params.get('refresh_token');
+              
+              if (accessToken) {
+                console.log('Definindo sessão com tokens extraídos');
+                const { data: sessionData, error } = await supabase.auth.setSession({
+                  access_token: accessToken,
+                  refresh_token: refreshToken || ''
+                });
+                
                 if (error) {
-                  console.error('Erro ao obter sessão após callback:', error);
-                } else if (sessionData?.session) {
-                  console.log('Sessão atualizada após callback:', sessionData.session.user?.email);
-                  setSession(sessionData.session);
-                  setUser(sessionData.session.user);
+                  console.error('Erro ao definir sessão:', error);
+                } else {
+                  console.log('Sessão definida com sucesso:', sessionData.user?.email);
                 }
-              } catch (error) {
-                console.error('Erro ao processar callback:', error);
               }
-            }, 1000);
+            } catch (error) {
+              console.error('Erro ao processar callback:', error);
+            }
           }
         };
 
@@ -184,13 +194,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
       
       if (isNative && Browser) {
-        console.log('Login mobile - usando approach direto');
+        console.log('Login mobile - Nova abordagem');
         
-        // Para mobile, usar redirect direto sem popup
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
-            redirectTo: 'com.fincontrol.app://callback'
+            redirectTo: 'com.fincontrol.app://callback',
+            queryParams: {
+              access_type: 'offline',
+              prompt: 'select_account'
+            }
           }
         });
 
@@ -208,21 +221,31 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           console.log('Abrindo URL OAuth:', data.url);
           
           try {
-            // Configuração simplificada do browser
+            // Configuração otimizada do browser para mobile
             await Browser.open({
               url: data.url,
-              windowName: '_system'
+              windowName: '_system',
+              presentationStyle: 'fullscreen',
+              toolbarColor: '#22c55e'
             });
             
-            console.log('Browser OAuth aberto com sucesso');
+            console.log('Browser OAuth aberto');
             
           } catch (browserError) {
             console.error('Erro ao abrir browser:', browserError);
-            toast({
-              title: "Erro no login",
-              description: "Não foi possível abrir o navegador",
-              variant: "destructive",
-            });
+            
+            // Fallback: tentar abrir no navegador padrão
+            try {
+              window.open(data.url, '_system');
+              console.log('Fallback: URL aberta no navegador padrão');
+            } catch (fallbackError) {
+              console.error('Erro no fallback:', fallbackError);
+              toast({
+                title: "Erro no login",
+                description: "Não foi possível abrir o navegador",
+                variant: "destructive",
+              });
+            }
           }
         }
       } else {
@@ -230,7 +253,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         const { error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
-            redirectTo: `${window.location.origin}/`
+            redirectTo: `${window.location.origin}/`,
+            queryParams: {
+              access_type: 'offline',
+              prompt: 'select_account'
+            }
           }
         });
 
